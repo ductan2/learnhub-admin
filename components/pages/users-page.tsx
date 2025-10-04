@@ -1,0 +1,106 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { UserList } from "@/components/users/user-list"
+import { UserDetailDialog } from "@/components/users/user-detail-dialog"
+import { api } from "@/lib/api"
+import type { User } from "@/lib/types"
+import { useToast } from "@/hooks/use-toast"
+
+export function UsersPage() {
+  const [users, setUsers] = useState<User[]>([])
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [verifiedFilter, setVerifiedFilter] = useState("all")
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false)
+
+  const { toast } = useToast()
+
+  useEffect(() => {
+    loadUsers()
+  }, [])
+
+  useEffect(() => {
+    filterUsers()
+  }, [users, searchQuery, statusFilter, verifiedFilter])
+
+  const loadUsers = async () => {
+    try {
+      const data = await api.users.getAll()
+      setUsers(data)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load users",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const filterUsers = () => {
+    let filtered = [...users]
+
+    if (searchQuery) {
+      filtered = filtered.filter(
+        (u) =>
+          u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          u.full_name.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+    }
+
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((u) => u.status === statusFilter)
+    }
+
+    if (verifiedFilter === "verified") {
+      filtered = filtered.filter((u) => u.email_verified)
+    } else if (verifiedFilter === "unverified") {
+      filtered = filtered.filter((u) => !u.email_verified)
+    }
+
+    setFilteredUsers(filtered)
+  }
+
+  const handleViewUser = (user: User) => {
+    setSelectedUser(user)
+    setDetailDialogOpen(true)
+  }
+
+  const handleUpdateStatus = async (userId: string, status: User["status"]) => {
+    try {
+      await api.users.updateStatus(userId, status)
+      toast({
+        title: "Success",
+        description: `User status updated to ${status}`,
+      })
+      loadUsers()
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update user status",
+        variant: "destructive",
+      })
+    }
+  }
+
+  return (
+    <div className="p-6">
+      <UserList
+        users={filteredUsers}
+        onViewUser={handleViewUser}
+        onUpdateStatus={handleUpdateStatus}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        verifiedFilter={verifiedFilter}
+        onVerifiedFilterChange={setVerifiedFilter}
+      />
+
+      <UserDetailDialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} user={selectedUser} />
+    </div>
+  )
+}

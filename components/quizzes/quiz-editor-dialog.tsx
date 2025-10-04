@@ -1,0 +1,149 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { QuestionEditor } from "./question-editor"
+import type { Quiz, QuizQuestion } from "@/lib/types"
+import { Eye, Save, Check } from "lucide-react"
+import { Card } from "@/components/ui/card"
+
+interface QuizEditorDialogProps {
+  open: boolean
+  onClose: () => void
+  quiz: Quiz | null
+  onSave: (questions: QuizQuestion[]) => void
+}
+
+export function QuizEditorDialog({ open, onClose, quiz, onSave }: QuizEditorDialogProps) {
+  const [questions, setQuestions] = useState<QuizQuestion[]>([])
+  const [activeTab, setActiveTab] = useState("edit")
+
+  useEffect(() => {
+    if (quiz) {
+      // In real app, would load questions from API
+      setQuestions([])
+    }
+  }, [quiz])
+
+  const handleSave = () => {
+    onSave(questions)
+    onClose()
+  }
+
+  if (!quiz) return null
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
+        <DialogHeader>
+          <div className="flex items-center justify-between">
+            <DialogTitle>{quiz.title}</DialogTitle>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setActiveTab(activeTab === "edit" ? "preview" : "edit")}>
+                <Eye className="h-4 w-4 mr-2" />
+                {activeTab === "edit" ? "Preview" : "Edit"}
+              </Button>
+              <Button onClick={handleSave}>
+                <Save className="h-4 w-4 mr-2" />
+                Save Questions
+              </Button>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="edit">Edit Questions</TabsTrigger>
+            <TabsTrigger value="preview">Preview Quiz</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="edit" className="flex-1 overflow-y-auto mt-4">
+            <QuestionEditor quizId={quiz.id} questions={questions} onQuestionsChange={setQuestions} />
+          </TabsContent>
+
+          <TabsContent value="preview" className="flex-1 overflow-y-auto mt-4">
+            <div className="max-w-3xl mx-auto space-y-6">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">{quiz.title}</h1>
+                {quiz.description && <p className="text-muted-foreground">{quiz.description}</p>}
+                <div className="flex gap-4 mt-4 text-sm text-muted-foreground">
+                  <span>{questions.length} questions</span>
+                  {quiz.time_limit && <span>{quiz.time_limit} minutes</span>}
+                  {quiz.passing_score && <span>Pass: {quiz.passing_score}%</span>}
+                </div>
+              </div>
+
+              {questions.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <p>No questions to preview yet</p>
+                </div>
+              ) : (
+                questions.map((question, index) => (
+                  <Card key={question.id} className="p-6">
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between">
+                        <h3 className="font-medium">
+                          {index + 1}. {question.question_text}
+                        </h3>
+                        <span className="text-sm text-muted-foreground">{question.points} pts</span>
+                      </div>
+
+                      {question.type === "multiple_choice" && (
+                        <div className="space-y-2">
+                          {question.answers?.map((answer) => (
+                            <div
+                              key={answer.id}
+                              className={`p-3 border rounded ${answer.is_correct ? "border-green-500 bg-green-500/10" : "border-border"}`}
+                            >
+                              {answer.answer_text}
+                              {answer.is_correct && <Check className="inline h-4 w-4 ml-2 text-green-500" />}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {question.type === "true_false" && (
+                        <div className="space-y-2">
+                          <div
+                            className={`p-3 border rounded ${question.correct_answer === "true" ? "border-green-500 bg-green-500/10" : "border-border"}`}
+                          >
+                            True
+                            {question.correct_answer === "true" && (
+                              <Check className="inline h-4 w-4 ml-2 text-green-500" />
+                            )}
+                          </div>
+                          <div
+                            className={`p-3 border rounded ${question.correct_answer === "false" ? "border-green-500 bg-green-500/10" : "border-border"}`}
+                          >
+                            False
+                            {question.correct_answer === "false" && (
+                              <Check className="inline h-4 w-4 ml-2 text-green-500" />
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {question.type === "short_answer" && (
+                        <div className="p-3 border border-border rounded bg-muted">
+                          <p className="text-sm text-muted-foreground">Correct answer: {question.correct_answer}</p>
+                        </div>
+                      )}
+
+                      {question.explanation && (
+                        <div className="text-sm text-muted-foreground italic">
+                          <strong>Explanation:</strong> {question.explanation}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  )
+}

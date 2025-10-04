@@ -1,0 +1,128 @@
+import { type NextRequest, NextResponse } from "next/server"
+
+// Mock leaderboard data
+const mockUsers = [
+  {
+    id: "1",
+    email: "sarah.chen@example.com",
+    username: "sarahchen",
+    full_name: "Sarah Chen",
+    avatar_url: "/professional-woman.png",
+    total_points: 15420,
+    current_streak: 45,
+    longest_streak: 67,
+    email_verified: true,
+    status: "active" as const,
+    created_at: "2024-01-15T10:00:00Z",
+    last_login: "2025-01-10T14:30:00Z",
+  },
+  {
+    id: "2",
+    email: "marcus.johnson@example.com",
+    username: "marcusj",
+    full_name: "Marcus Johnson",
+    avatar_url: "/professional-man.png",
+    total_points: 14850,
+    current_streak: 38,
+    longest_streak: 52,
+    email_verified: true,
+    status: "active" as const,
+    created_at: "2024-02-01T10:00:00Z",
+    last_login: "2025-01-10T09:15:00Z",
+  },
+  {
+    id: "3",
+    email: "emily.rodriguez@example.com",
+    username: "emilyrod",
+    full_name: "Emily Rodriguez",
+    avatar_url: "/woman-student.png",
+    total_points: 13920,
+    current_streak: 52,
+    longest_streak: 52,
+    email_verified: true,
+    status: "active" as const,
+    created_at: "2024-01-20T10:00:00Z",
+    last_login: "2025-01-10T16:45:00Z",
+  },
+  {
+    id: "4",
+    email: "david.kim@example.com",
+    username: "davidkim",
+    full_name: "David Kim",
+    avatar_url: "/man-student.png",
+    total_points: 12680,
+    current_streak: 29,
+    longest_streak: 41,
+    email_verified: true,
+    status: "active" as const,
+    created_at: "2024-02-10T10:00:00Z",
+    last_login: "2025-01-09T11:20:00Z",
+  },
+  {
+    id: "5",
+    email: "jessica.patel@example.com",
+    username: "jessicap",
+    full_name: "Jessica Patel",
+    avatar_url: "/professional-woman.png",
+    total_points: 11540,
+    current_streak: 21,
+    longest_streak: 35,
+    email_verified: true,
+    status: "active" as const,
+    created_at: "2024-03-01T10:00:00Z",
+    last_login: "2025-01-10T08:30:00Z",
+  },
+  {
+    id: "6",
+    email: "alex.thompson@example.com",
+    username: "alexthompson",
+    full_name: "Alex Thompson",
+    avatar_url: "/professional-person.png",
+    total_points: 10920,
+    current_streak: 18,
+    longest_streak: 28,
+    email_verified: true,
+    status: "active" as const,
+    created_at: "2024-03-15T10:00:00Z",
+    last_login: "2025-01-09T19:00:00Z",
+  },
+  {
+    id: "7",
+    email: "maria.garcia@example.com",
+    username: "mariagarcia",
+    full_name: "Maria Garcia",
+    avatar_url: "/woman-student.png",
+    total_points: 9850,
+    current_streak: 15,
+    longest_streak: 22,
+    email_verified: true,
+    status: "active" as const,
+    created_at: "2024-04-01T10:00:00Z",
+    last_login: "2025-01-10T12:15:00Z",
+  },
+  {
+    id: "8",
+    email: "james.wilson@example.com",
+    username: "jameswilson",
+    full_name: "James Wilson",
+    avatar_url: "/professional-man.png",
+    total_points: 8920,
+    current_streak: 12,
+    longest_streak: 19,
+    email_verified: true,
+    status: "active" as const,
+    created_at: "2024-04-15T10:00:00Z",
+    last_login: "2025-01-08T15:45:00Z",
+  },
+]
+
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams
+  const period = searchParams.get("period") || "all-time"
+
+  // In a real app, you would filter by period and fetch from database
+  // For now, return sorted mock data
+  const sortedUsers = [...mockUsers].sort((a, b) => b.total_points - a.total_points)
+
+  return NextResponse.json(sortedUsers)
+}

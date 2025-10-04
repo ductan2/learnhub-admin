@@ -1,0 +1,575 @@
+import type {
+  User,
+  Folder,
+  MediaAsset,
+  Topic,
+  Level,
+  Lesson,
+  Quiz,
+  Question,
+  QuestionOption,
+  Enrollment,
+  QuizAttempt,
+  Course,
+  CourseLesson,
+  Notification,
+  Submission,
+} from "./types"
+
+// Mock Users
+export const mockUsers: User[] = [
+  {
+    id: "1",
+    email: "john.doe@example.com",
+    username: "johndoe",
+    full_name: "John Doe",
+    avatar_url: "/diverse-user-avatars.png",
+    email_verified: true,
+    role: "user",
+    status: "active",
+    tenant: "default",
+    created_at: "2024-01-15T10:00:00Z",
+    updated_at: "2024-09-20T15:30:00Z",
+    last_login: "2024-10-03T14:30:00Z",
+    last_login_at: "2024-10-03T14:30:00Z",
+    last_login_ip: "192.168.1.100",
+    lockout_until: null,
+    deleted_at: null,
+    total_points: 1250,
+    current_streak: 7,
+  },
+  {
+    id: "2",
+    email: "jane.smith@example.com",
+    username: "janesmith",
+    full_name: "Jane Smith",
+    avatar_url: "/female-user-avatar.png",
+    email_verified: true,
+    role: "instructor",
+    status: "active",
+    tenant: "default",
+    created_at: "2024-02-20T09:00:00Z",
+    updated_at: "2024-10-01T12:00:00Z",
+    last_login: "2024-10-04T08:15:00Z",
+    last_login_at: "2024-10-04T08:15:00Z",
+    last_login_ip: "192.168.1.105",
+    lockout_until: null,
+    deleted_at: null,
+    total_points: 2100,
+    current_streak: 12,
+  },
+  {
+    id: "3",
+    email: "mike.wilson@example.com",
+    username: "mikew",
+    full_name: "Mike Wilson",
+    email_verified: false,
+    role: "user",
+    status: "active",
+    tenant: "default",
+    created_at: "2024-03-10T11:30:00Z",
+    updated_at: "2024-03-10T11:30:00Z",
+    last_login_at: "2024-09-28T16:45:00Z",
+    last_login_ip: "10.0.0.50",
+    lockout_until: null,
+    deleted_at: null,
+    total_points: 450,
+    current_streak: 3,
+  },
+  // Add more mock users...
+]
+
+// Mock Topics
+export const mockTopics: Topic[] = [
+  { id: "1", name: "Mathematics", description: "Math courses and lessons", icon: "📐" },
+  { id: "2", name: "Science", description: "Science courses", icon: "🔬" },
+  { id: "3", name: "Programming", description: "Coding and software development", icon: "💻" },
+  { id: "4", name: "Languages", description: "Foreign language learning", icon: "🌍" },
+  { id: "5", name: "Business", description: "Business and entrepreneurship", icon: "💼" },
+]
+
+// Mock Levels
+export const mockLevels: Level[] = [
+  { id: "1", name: "Beginner", order: 1 },
+  { id: "2", name: "Intermediate", order: 2 },
+  { id: "3", name: "Advanced", order: 3 },
+  { id: "4", name: "Expert", order: 4 },
+]
+
+// Mock Folders
+export const mockFolders: Folder[] = [
+  {
+    id: "1",
+    name: "Course Images",
+    parent_id: null,
+    created_at: "2024-01-01T00:00:00Z",
+    created_by: "admin",
+    file_count: 15,
+    total_size: 5242880,
+  },
+  {
+    id: "2",
+    name: "Video Lessons",
+    parent_id: null,
+    created_at: "2024-01-01T00:00:00Z",
+    created_by: "admin",
+    file_count: 8,
+    total_size: 104857600,
+  },
+  {
+    id: "3",
+    name: "Audio Files",
+    parent_id: null,
+    created_at: "2024-01-01T00:00:00Z",
+    created_by: "admin",
+    file_count: 12,
+    total_size: 20971520,
+  },
+  {
+    id: "4",
+    name: "Math Resources",
+    parent_id: "1",
+    created_at: "2024-01-05T00:00:00Z",
+    created_by: "admin",
+    file_count: 5,
+    total_size: 1048576,
+  },
+]
+
+// Mock Media Assets
+export const mockMediaAssets: MediaAsset[] = [
+  {
+    id: "1",
+    storage_key: "images/math-intro.jpg",
+    filename: "math-intro.jpg",
+    mime_type: "image/jpeg",
+    size_bytes: 524288,
+    folder_id: "4",
+    uploaded_by: "admin",
+    uploaded_at: "2024-01-10T10:00:00Z",
+    thumbnail_url: "/math-introduction.jpg",
+    url: "/math-introduction.jpg",
+  },
+  {
+    id: "2",
+    storage_key: "videos/python-basics.mp4",
+    filename: "python-basics.mp4",
+    mime_type: "video/mp4",
+    size_bytes: 52428800,
+    folder_id: "2",
+    uploaded_by: "admin",
+    uploaded_at: "2024-01-15T14:30:00Z",
+    thumbnail_url: "/python-coding.jpg",
+    url: "#",
+  },
+  // Add more mock assets...
+]
+
+// Mock Lessons
+export const mockLessons: Lesson[] = [
+  {
+    id: "1",
+    title: "Introduction to Algebra",
+    description: "Learn the basics of algebraic expressions and equations",
+    topic_id: "1",
+    level_id: "1",
+    is_published: true,
+    created_at: "2024-02-01T00:00:00Z",
+    updated_at: "2024-02-15T00:00:00Z",
+    version: 2,
+    enrollment_count: 45,
+    completion_rate: 78,
+  },
+  {
+    id: "2",
+    title: "Python Programming Fundamentals",
+    description: "Master the fundamentals of Python programming",
+    topic_id: "3",
+    level_id: "1",
+    is_published: true,
+    created_at: "2024-02-10T00:00:00Z",
+    updated_at: "2024-02-10T00:00:00Z",
+    version: 1,
+    enrollment_count: 89,
+    completion_rate: 65,
+  },
+  {
+    id: "3",
+    title: "Advanced Calculus",
+    description: "Deep dive into differential and integral calculus",
+    topic_id: "1",
+    level_id: "3",
+    is_published: false,
+    created_at: "2024-03-01T00:00:00Z",
+    updated_at: "2024-03-05T00:00:00Z",
+    version: 1,
+    enrollment_count: 12,
+    completion_rate: 45,
+  },
+]
+
+// Mock Enrollments
+export const mockEnrollments: Enrollment[] = [
+  {
+    id: "1",
+    user_id: "1",
+    lesson_id: "1",
+    enrolled_at: "2024-02-05T00:00:00Z",
+    completed_at: "2024-02-20T00:00:00Z",
+    progress_percentage: 100,
+  },
+  {
+    id: "2",
+    user_id: "2",
+    lesson_id: "2",
+    enrolled_at: "2024-02-12T00:00:00Z",
+    progress_percentage: 65,
+  },
+]
+
+// Mock Quizzes
+export const mockQuizzes: Quiz[] = [
+  {
+    id: "1",
+    lesson_id: "1",
+    title: "Algebra Basics Quiz",
+    time_limit_minutes: 30,
+    passing_score: 70,
+    created_at: "2024-02-01T00:00:00Z",
+  },
+  {
+    id: "2",
+    lesson_id: "2",
+    title: "Python Syntax Test",
+    time_limit_minutes: 45,
+    passing_score: 75,
+    created_at: "2024-02-10T00:00:00Z",
+  },
+]
+
+// Mock Questions
+export const mockQuestions: Question[] = [
+  {
+    id: "1",
+    quiz_id: "1",
+    type: "multiple_choice",
+    question_text: "What is the value of x in the equation 2x + 5 = 13?",
+    points: 10,
+    order: 1,
+  },
+  {
+    id: "2",
+    quiz_id: "1",
+    type: "true_false",
+    question_text: "The commutative property states that a + b = b + a",
+    points: 5,
+    order: 2,
+  },
+]
+
+// Mock Question Options
+export const mockQuestionOptions: QuestionOption[] = [
+  {
+    id: "1",
+    question_id: "1",
+    option_text: "x = 4",
+    is_correct: true,
+    order: 1,
+  },
+  {
+    id: "2",
+    question_id: "1",
+    option_text: "x = 8",
+    is_correct: false,
+    order: 2,
+  },
+  {
+    id: "3",
+    question_id: "1",
+    option_text: "x = 6",
+    is_correct: false,
+    order: 3,
+  },
+]
+
+// Mock Quiz Attempts
+export const mockQuizAttempts: QuizAttempt[] = [
+  {
+    id: "1",
+    user_id: "1",
+    quiz_id: "1",
+    score: 85,
+    max_score: 100,
+    started_at: "2024-02-15T10:00:00Z",
+    completed_at: "2024-02-15T10:25:00Z",
+  },
+  {
+    id: "2",
+    user_id: "2",
+    quiz_id: "2",
+    score: 92,
+    max_score: 100,
+    started_at: "2024-02-20T14:00:00Z",
+    completed_at: "2024-02-20T14:40:00Z",
+  },
+]
+
+// Mock Courses
+export const mockCourses: Course[] = [
+  {
+    id: "1",
+    title: "Complete Mathematics Mastery",
+    description: "Master mathematics from basic algebra to advanced calculus with comprehensive lessons and practice",
+    topic_id: "1",
+    level_id: "2",
+    instructor_id: "2",
+    thumbnail_url: "/math-introduction.jpg",
+    is_published: true,
+    is_featured: true,
+    price: 49.99,
+    duration_hours: 40,
+    created_at: "2024-01-15T00:00:00Z",
+    updated_at: "2024-02-20T00:00:00Z",
+    enrollment_count: 234,
+    completion_rate: 68,
+    rating: 4.7,
+    lesson_ids: ["1", "3"],
+  },
+  {
+    id: "2",
+    title: "Python Programming Bootcamp",
+    description: "Learn Python from scratch to advanced topics including web development and data science",
+    topic_id: "3",
+    level_id: "1",
+    instructor_id: "2",
+    thumbnail_url: "/python-coding.jpg",
+    is_published: true,
+    is_featured: true,
+    price: 79.99,
+    duration_hours: 60,
+    created_at: "2024-02-01T00:00:00Z",
+    updated_at: "2024-03-10T00:00:00Z",
+    enrollment_count: 456,
+    completion_rate: 72,
+    rating: 4.9,
+    lesson_ids: ["2"],
+  },
+  {
+    id: "3",
+    title: "Business Strategy Fundamentals",
+    description: "Learn essential business strategy concepts and frameworks used by top companies",
+    topic_id: "5",
+    level_id: "2",
+    instructor_id: "2",
+    is_published: false,
+    is_featured: false,
+    price: 59.99,
+    duration_hours: 25,
+    created_at: "2024-03-01T00:00:00Z",
+    updated_at: "2024-03-15T00:00:00Z",
+    enrollment_count: 45,
+    completion_rate: 55,
+    rating: 4.3,
+    lesson_ids: [],
+  },
+]
+
+// Mock Course Lessons
+export const mockCourseLessons: CourseLesson[] = [
+  {
+    id: "1",
+    course_id: "1",
+    lesson_id: "1",
+    order: 1,
+    is_required: true,
+  },
+  {
+    id: "2",
+    course_id: "1",
+    lesson_id: "3",
+    order: 2,
+    is_required: true,
+  },
+  {
+    id: "3",
+    course_id: "2",
+    lesson_id: "2",
+    order: 1,
+    is_required: true,
+  },
+]
+
+// Mock Notifications
+export const mockNotifications: Notification[] = [
+  {
+    id: "1",
+    user_id: "1",
+    title: "Welcome to LMS!",
+    body: "Thank you for joining our learning platform. Start exploring courses now!",
+    type: "system",
+    data: {},
+    is_read: true,
+    read_at: "2024-01-16T10:30:00Z",
+    created_at: "2024-01-15T10:00:00Z",
+    priority: "normal",
+  },
+  {
+    id: "2",
+    user_id: "1",
+    title: "New Lesson Available",
+    body: "A new lesson 'Introduction to Algebra' has been published in Mathematics",
+    type: "lesson",
+    data: { lesson_id: "1", topic: "Mathematics" },
+    is_read: false,
+    created_at: "2024-02-01T08:00:00Z",
+    priority: "normal",
+  },
+  {
+    id: "3",
+    user_id: "1",
+    title: "Quiz Reminder",
+    body: "Don't forget to complete the Algebra Basics Quiz before the deadline",
+    type: "reminder",
+    data: { quiz_id: "1" },
+    is_read: false,
+    created_at: "2024-02-14T09:00:00Z",
+    expires_at: "2024-02-20T23:59:59Z",
+    priority: "high",
+  },
+  {
+    id: "4",
+    user_id: "2",
+    title: "System Maintenance",
+    body: "Scheduled maintenance on Sunday 2AM-4AM. Platform will be unavailable.",
+    type: "system",
+    data: {},
+    is_read: true,
+    read_at: "2024-03-01T14:00:00Z",
+    created_at: "2024-02-28T10:00:00Z",
+    expires_at: "2024-03-03T00:00:00Z",
+    priority: "high",
+  },
+  {
+    id: "5",
+    user_id: "2",
+    title: "Course Enrollment Confirmed",
+    body: "You have successfully enrolled in 'Python Programming Bootcamp'",
+    type: "course",
+    data: { course_id: "2" },
+    is_read: true,
+    read_at: "2024-02-12T10:15:00Z",
+    created_at: "2024-02-12T10:00:00Z",
+    priority: "normal",
+  },
+  {
+    id: "6",
+    user_id: "3",
+    title: "New Feature Announcement",
+    body: "Check out our new interactive coding challenges in the Programming section!",
+    type: "announcement",
+    data: {},
+    is_read: false,
+    created_at: "2024-03-15T12:00:00Z",
+    priority: "low",
+  },
+]
+
+// Mock Submissions
+export const mockSubmissions: Submission[] = [
+  {
+    id: "1",
+    user_id: "1",
+    assignment_id: "a1",
+    assignment_title: "English Essay: My Favorite Book",
+    type: "writing",
+    content:
+      "My favorite book is 'To Kill a Mockingbird' by Harper Lee. This classic novel explores themes of racial injustice and moral growth in the American South during the 1930s. The story is told through the eyes of Scout Finch, a young girl whose father, Atticus, is a lawyer defending a black man falsely accused of a crime. What makes this book special to me is how it addresses serious social issues while maintaining a sense of hope and humanity.",
+    status: "pending",
+    ai_score: 85,
+    ai_feedback:
+      "Good structure and clear thesis. Grammar is mostly correct. Consider adding more specific examples from the text to support your arguments. The conclusion could be stronger.",
+    submitted_at: "2024-10-03T10:30:00Z",
+  },
+  {
+    id: "2",
+    user_id: "2",
+    assignment_id: "a2",
+    assignment_title: "Speaking Practice: Introduce Yourself",
+    type: "speaking",
+    audio_url: "/audio/submission-2.mp3",
+    status: "pending",
+    ai_score: 78,
+    ai_feedback:
+      "Clear pronunciation and good pace. Vocabulary is appropriate for the level. Try to use more varied sentence structures and reduce filler words like 'um' and 'uh'.",
+    submitted_at: "2024-10-03T14:15:00Z",
+  },
+  {
+    id: "3",
+    user_id: "3",
+    assignment_id: "a1",
+    assignment_title: "English Essay: My Favorite Book",
+    type: "writing",
+    content:
+      "I like Harry Potter. It is a good book. Harry is a wizard. He goes to school. The school is called Hogwarts. I like the magic in the book.",
+    status: "graded",
+    ai_score: 45,
+    ai_feedback:
+      "The essay is too short and lacks detail. Sentences are very simple. You need to develop your ideas more fully and use more complex sentence structures.",
+    teacher_score: 50,
+    teacher_feedback:
+      "Good start, but you need to expand your ideas significantly. Try to write at least 200 words and include specific examples from the book. Work on using more descriptive language and varied sentence structures.",
+    submitted_at: "2024-10-02T09:00:00Z",
+    graded_at: "2024-10-03T11:00:00Z",
+    graded_by: "2",
+  },
+  {
+    id: "4",
+    user_id: "1",
+    assignment_id: "a3",
+    assignment_title: "Speaking Practice: Describe Your Daily Routine",
+    type: "speaking",
+    audio_url: "/audio/submission-4.mp3",
+    status: "graded",
+    ai_score: 92,
+    ai_feedback:
+      "Excellent fluency and pronunciation. Good use of time expressions and sequencing words. Very natural delivery.",
+    teacher_score: 95,
+    teacher_feedback:
+      "Outstanding work! Your speaking is very natural and fluent. You used a great variety of vocabulary and your pronunciation is excellent. Keep up the great work!",
+    submitted_at: "2024-10-01T16:20:00Z",
+    graded_at: "2024-10-02T10:30:00Z",
+    graded_by: "2",
+  },
+  {
+    id: "5",
+    user_id: "2",
+    assignment_id: "a4",
+    assignment_title: "Writing Task: Argumentative Essay on Climate Change",
+    type: "writing",
+    content:
+      "Climate change is one of the most pressing issues facing our planet today. The scientific consensus is clear: human activities, particularly the burning of fossil fuels, are causing global temperatures to rise at an unprecedented rate. This warming is leading to severe consequences including rising sea levels, more frequent extreme weather events, and disruption of ecosystems worldwide. We must take immediate action to reduce greenhouse gas emissions and transition to renewable energy sources. Governments, businesses, and individuals all have a role to play in addressing this crisis.",
+    status: "pending",
+    ai_score: 88,
+    ai_feedback:
+      "Strong argument with good supporting evidence. Well-organized structure. Consider adding counterarguments and refuting them to strengthen your position. Some minor grammar issues to address.",
+    submitted_at: "2024-10-04T08:45:00Z",
+  },
+  {
+    id: "6",
+    user_id: "3",
+    assignment_id: "a2",
+    assignment_title: "Speaking Practice: Introduce Yourself",
+    type: "speaking",
+    audio_url: "/audio/submission-6.mp3",
+    status: "needs_revision",
+    ai_score: 55,
+    ai_feedback:
+      "Pronunciation needs improvement. Speaking pace is too fast, making it difficult to understand. Practice speaking more slowly and clearly.",
+    teacher_score: 60,
+    teacher_feedback:
+      "You have good ideas, but you need to slow down and focus on clear pronunciation. Practice the difficult sounds we discussed in class. Record yourself and listen back to identify areas for improvement.",
+    submitted_at: "2024-10-02T13:30:00Z",
+    graded_at: "2024-10-03T09:15:00Z",
+    graded_by: "2",
+  },
+]
