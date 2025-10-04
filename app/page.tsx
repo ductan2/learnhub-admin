@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { ProtectedRoute } from "@/components/auth/protected-route"
 import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
 import { DashboardPage } from "@/components/pages/dashboard-page"
@@ -43,16 +44,18 @@ export default function AdminDashboard() {
   const pageTitle = pageConfig[currentPage].title
 
   return (
-    <div className="h-screen flex bg-background">
-      <Sidebar currentPage={currentPage} onNavigate={(page) => setCurrentPage(page as keyof typeof pageConfig)} />
+    <ProtectedRoute>
+      <div className="h-screen flex bg-background">
+        <Sidebar currentPage={currentPage} onNavigate={(page) => setCurrentPage(page as keyof typeof pageConfig)} />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header title={pageTitle} />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header title={pageTitle} />
 
-        <main className="flex-1 overflow-y-auto">
-          <PageComponent />
-        </main>
+          <main className="flex-1 overflow-y-auto">
+            <PageComponent />
+          </main>
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   )
 }

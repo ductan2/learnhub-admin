@@ -28,7 +28,7 @@ function Alert({
     <div
       data-slot="alert"
       role="alert"
-      className={cn(alertVariants({ variant }), className)}
+      className={cn(alertVariants({ variant }), className) + ' border border-red-500'}
       {...props}
     />
   )
