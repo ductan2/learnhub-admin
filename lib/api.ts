@@ -15,6 +15,7 @@ import type {
   CreateQuizDto,
   CreateQuestionDto,
   Topic,
+  Tag,
   Level,
   Course,
   CourseFilters,
@@ -49,6 +50,71 @@ import {
 
 // Simulate network delay
 const delay = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const getContentApiBaseUrl = () => {
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, '')
+  if (backendUrl) {
+    return `${backendUrl}/api/v1/content`
+  }
+  return '/api/v1/content'
+}
+
+type ContentResource = 'topics' | 'levels' | 'tags'
+
+const buildContentUrl = (resource: ContentResource, search?: string) => {
+  const baseUrl = getContentApiBaseUrl().replace(/\/$/, '')
+  const url = `${baseUrl}/${resource}`
+  if (search) {
+    return `${url}?search=${encodeURIComponent(search)}`
+  }
+  return url
+}
+
+const extractResourceArray = <T>(payload: unknown, resource: ContentResource): T => {
+  if (Array.isArray(payload)) {
+    return payload as T
+  }
+
+  if (payload && typeof payload === 'object') {
+    const record = payload as Record<string, unknown>
+    const possibleKeys: Array<string> = [resource, 'data', 'items', 'results', 'content']
+
+    for (const key of possibleKeys) {
+      const value = record[key]
+
+      if (Array.isArray(value)) {
+        return value as T
+      }
+
+      if (value && typeof value === 'object') {
+        const nestedRecord = value as Record<string, unknown>
+
+        for (const nestedKey of possibleKeys) {
+          const nestedValue = nestedRecord[nestedKey]
+
+          if (Array.isArray(nestedValue)) {
+            return nestedValue as T
+          }
+        }
+      }
+    }
+  }
+
+  return payload as T
+}
+
+const fetchContentResource = async <T>(resource: ContentResource, search?: string): Promise<T> => {
+  const response = await fetch(buildContentUrl(resource, search), {
+    cache: 'no-store',
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${resource}`)
+  }
+
+  const payload = await response.json()
+  return extractResourceArray<T>(payload, resource)
+}
 
 // API Service
 export const api = {
@@ -134,16 +200,47 @@ export const api = {
 
   // Topics & Levels
   topics: {
-    getAll: async (): Promise<Topic[]> => {
-      await delay()
-      return mockTopics
+    getAll: async (search?: string): Promise<Topic[]> => {
+      try {
+        const topics = await fetchContentResource<Topic[]>('topics', search)
+        if (Array.isArray(topics) && topics.length > 0) {
+          return topics
+        }
+        return mockTopics
+      } catch (error) {
+        console.error('Failed to fetch topics from content API:', error)
+        return mockTopics
+      }
     },
   },
 
   levels: {
-    getAll: async (): Promise<Level[]> => {
-      await delay()
-      return mockLevels
+    getAll: async (search?: string): Promise<Level[]> => {
+      try {
+        const levels = await fetchContentResource<Level[]>('levels', search)
+        if (Array.isArray(levels) && levels.length > 0) {
+          return levels
+        }
+        return mockLevels
+      } catch (error) {
+        console.error('Failed to fetch levels from content API:', error)
+        return mockLevels
+      }
+    },
+  },
+
+  tags: {
+    getAll: async (search?: string): Promise<Tag[]> => {
+      try {
+        const tags = await fetchContentResource<Tag[]>('tags', search)
+        if (Array.isArray(tags)) {
+          return tags
+        }
+        return []
+      } catch (error) {
+        console.error('Failed to fetch tags from content API:', error)
+        return []
+      }
     },
   },
 

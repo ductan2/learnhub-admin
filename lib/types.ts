@@ -52,6 +52,13 @@ export interface Topic {
   icon?: string
 }
 
+export interface Tag {
+  id: string
+  name: string
+  slug: string
+  description?: string
+}
+
 export interface Level {
   id: string
   name: string
