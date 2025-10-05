@@ -4,6 +4,7 @@ import type {
   MediaAsset,
   Topic,
   Level,
+  Tag,
   Lesson,
   Quiz,
   Question,
@@ -94,6 +95,15 @@ export const mockLevels: Level[] = [
   { id: "2", name: "Intermediate", order: 2 },
   { id: "3", name: "Advanced", order: 3 },
   { id: "4", name: "Expert", order: 4 },
+]
+
+// Mock Tags
+export const mockTags: Tag[] = [
+  { id: "1", name: "STEM", slug: "stem", description: "Science, technology, engineering and mathematics" },
+  { id: "2", name: "Certification", slug: "certification", description: "Content that prepares learners for certification exams" },
+  { id: "3", name: "Project Based", slug: "project-based", description: "Hands-on, practical learning experiences" },
+  { id: "4", name: "Foundational", slug: "foundational", description: "Beginner friendly content that covers the basics" },
+  { id: "5", name: "Advanced", slug: "advanced", description: "In-depth content aimed at advanced learners" },
 ]
 
 // Mock Folders
