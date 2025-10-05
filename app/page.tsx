@@ -13,6 +13,9 @@ import { LeaderboardPage } from "@/components/pages/leaderboard-page"
 import { CoursesPage } from "@/components/pages/courses-page"
 import { NotificationsPage } from "@/components/pages/notifications-page"
 import { SubmissionsPage } from "@/components/pages/submissions-page"
+import { TopicsPage } from "@/components/pages/topics-page"
+import { LevelsPage } from "@/components/pages/levels-page"
+import { TagsPage } from "@/components/pages/tags-page"
 
 function SettingsPage() {
   return (
@@ -29,6 +32,9 @@ const pageConfig = {
   courses: { title: "Courses", component: CoursesPage },
   media: { title: "Media Library", component: MediaLibraryPage },
   lessons: { title: "Lessons", component: LessonsPage },
+  topics: { title: "Topics", component: TopicsPage },
+  levels: { title: "Levels", component: LevelsPage },
+  tags: { title: "Tags", component: TagsPage },
   quizzes: { title: "Quizzes", component: QuizzesPage },
   submissions: { title: "Submissions Review", component: SubmissionsPage },
   users: { title: "Users", component: UsersPage },

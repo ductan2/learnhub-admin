@@ -42,6 +42,7 @@ import {
   mockQuestionOptions,
   mockTopics,
   mockLevels,
+  mockTags,
   mockCourses,
   mockCourseLessons,
   mockNotifications,
@@ -233,13 +234,13 @@ export const api = {
     getAll: async (search?: string): Promise<Tag[]> => {
       try {
         const tags = await fetchContentResource<Tag[]>('tags', search)
-        if (Array.isArray(tags)) {
+        if (Array.isArray(tags) && tags.length > 0) {
           return tags
         }
-        return []
+        return mockTags
       } catch (error) {
         console.error('Failed to fetch tags from content API:', error)
-        return []
+        return mockTags
       }
     },
   },

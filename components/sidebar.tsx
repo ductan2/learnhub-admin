@@ -11,6 +11,9 @@ import {
   GraduationCap,
   Bell,
   FileCheck,
+  Shapes,
+  ListOrdered,
+  Tags,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -24,6 +27,9 @@ const navigation = [
   { id: "courses", name: "Courses", icon: GraduationCap },
   { id: "media", name: "Media Library", icon: ImageIcon },
   { id: "lessons", name: "Lessons", icon: BookOpen },
+  { id: "topics", name: "Topics", icon: Shapes },
+  { id: "levels", name: "Levels", icon: ListOrdered },
+  { id: "tags", name: "Tags", icon: Tags },
   { id: "quizzes", name: "Quizzes", icon: HelpCircle },
   { id: "submissions", name: "Submissions", icon: FileCheck },
   { id: "users", name: "Users", icon: Users },
