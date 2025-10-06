@@ -52,6 +52,14 @@ export interface Topic {
   icon?: string
 }
 
+export interface CreateTopicDto {
+  name: string
+  description?: string
+  icon?: string
+}
+
+export type UpdateTopicDto = Partial<CreateTopicDto>
+
 export interface Tag {
   id: string
   name: string
@@ -59,11 +67,26 @@ export interface Tag {
   description?: string
 }
 
+export interface CreateTagDto {
+  name: string
+  slug: string
+  description?: string
+}
+
+export type UpdateTagDto = Partial<CreateTagDto>
+
 export interface Level {
   id: string
   name: string
   order: number
 }
+
+export interface CreateLevelDto {
+  name: string
+  order?: number
+}
+
+export type UpdateLevelDto = Partial<CreateLevelDto>
 
 export interface Lesson {
   id: string
