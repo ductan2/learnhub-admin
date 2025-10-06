@@ -164,14 +164,55 @@ export function MediaLibraryPage() {
   }
 
   const handleUpload = async (files: File[]) => {
-    // Simulate upload - in real app would upload to storage
-    toast({
-      title: "Success",
-      description: `${files.length} file(s) uploaded successfully`,
-    })
-    setShowUploadZone(false)
-    // Reload assets after upload
-    setTimeout(loadAssets, 500)
+    const uploads = files.map((file) => ({
+      file,
+      kind: file.type.startsWith("image/")
+        ? "IMAGE"
+        : file.type.startsWith("audio/")
+          ? "AUDIO"
+          : null,
+    }))
+
+    const unsupportedCount = uploads.filter((upload) => upload.kind === null).length
+
+    if (unsupportedCount > 0) {
+      toast({
+        title: "Unsupported files skipped",
+        description: `${unsupportedCount} file(s) must be images or audio to upload`,
+        variant: "destructive",
+      })
+    }
+
+    const supportedUploads = uploads.filter(
+      (upload): upload is { file: File; kind: "IMAGE" | "AUDIO" } => upload.kind !== null,
+    )
+
+    if (supportedUploads.length === 0) {
+      return
+    }
+
+    try {
+      await Promise.all(
+        supportedUploads.map(({ file, kind }) =>
+          api.media.upload(file, kind, selectedFolderId ?? undefined),
+        ),
+      )
+
+      toast({
+        title: "Success",
+        description: `${supportedUploads.length} file(s) uploaded successfully`,
+      })
+      setShowUploadZone(false)
+      await loadAssets()
+    } catch (error) {
+      console.error(error)
+      toast({
+        title: "Error",
+        description: "Failed to upload files",
+        variant: "destructive",
+      })
+      return
+    }
   }
 
   const handleBulkDelete = async () => {
