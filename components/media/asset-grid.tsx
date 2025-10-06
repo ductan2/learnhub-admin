@@ -73,9 +73,9 @@ export function AssetGrid({
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {assets.map((asset) => {
-          const Icon = getFileIcon(asset.mime_type)
+          const Icon = getFileIcon(asset.mimeType)
           const isSelected = selectedAssets.has(asset.id)
-          const isImage = asset.mime_type.startsWith("image/")
+          const isImage = asset.mimeType.startsWith("image/")
 
           return (
             <div
@@ -101,15 +101,21 @@ export function AssetGrid({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => copyToClipboard(asset.storage_key)}>
+                    <DropdownMenuItem onClick={() => copyToClipboard(asset.storageKey)}>
                       <Copy className="h-4 w-4 mr-2" />
                       Copy Storage Key
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => copyToClipboard(asset.url)}>
+                    <DropdownMenuItem onClick={() => copyToClipboard(asset.downloadURL)}>
                       <Copy className="h-4 w-4 mr-2" />
                       Copy URL
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        if (asset.downloadURL && asset.downloadURL !== "#") {
+                          window.open(asset.downloadURL, "_blank")
+                        }
+                      }}
+                    >
                       <Download className="h-4 w-4 mr-2" />
                       Download
                     </DropdownMenuItem>
@@ -123,10 +129,10 @@ export function AssetGrid({
 
               <button onClick={() => onPreviewAsset(asset)} className="w-full">
                 <div className="aspect-square bg-muted flex items-center justify-center">
-                  {isImage && asset.thumbnail_url ? (
+                  {isImage && (asset.thumbnailURL || asset.downloadURL) ? (
                     <img
-                      src={asset.thumbnail_url || "/placeholder.svg"}
-                      alt={asset.filename}
+                      src={asset.thumbnailURL || asset.downloadURL || "/placeholder.svg"}
+                      alt={asset.originalName}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -135,10 +141,10 @@ export function AssetGrid({
                 </div>
 
                 <div className="p-3 bg-card">
-                  <p className="text-sm font-medium truncate" title={asset.filename}>
-                    {asset.filename}
+                  <p className="text-sm font-medium truncate" title={asset.originalName}>
+                    {asset.originalName}
                   </p>
-                  <p className="text-xs text-muted-foreground">{formatFileSize(asset.size_bytes)}</p>
+                  <p className="text-xs text-muted-foreground">{formatFileSize(asset.bytes)}</p>
                 </div>
               </button>
             </div>

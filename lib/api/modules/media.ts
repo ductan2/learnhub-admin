@@ -1,64 +1,173 @@
 import type { Folder, MediaAsset, MediaFilters, CreateFolderDto } from '@/lib/types'
-import { delay } from '@/lib/api/utils'
-import { mockFolders, mockMediaAssets } from '@/lib/mock-data'
 import { apolloClient } from '@/lib/graphql/client'
-import { GET_MEDIA_ASSETS, UPLOAD_MEDIA } from '@/lib/graphql/queries'
+import {
+  CREATE_FOLDER,
+  DELETE_FOLDER,
+  DELETE_MEDIA,
+  GET_MEDIA_ASSETS,
+  LIST_FOLDERS,
+  UPLOAD_MEDIA,
+} from '@/lib/graphql/queries'
+
+const DEFAULT_PAGE_SIZE = 100
+
+type ListFoldersGraphqlResponse = {
+  folders: {
+    items: Folder[]
+  }
+}
+
+type MediaAssetCollectionResponse = {
+  mediaAssetCollection: {
+    items: MediaAsset[]
+  }
+}
 
 type UploadMediaGraphqlResponse = {
   uploadMedia: MediaAsset
 }
 
+type CreateFolderGraphqlResponse = {
+  createFolder: Folder
+}
+
+type DeleteFolderGraphqlResponse = {
+  deleteFolder: boolean
+}
+
+type DeleteMediaGraphqlResponse = {
+  deleteMedia: boolean
+}
+
+const buildMediaFilterInput = (filters?: MediaFilters) => {
+  if (!filters) {
+    return undefined
+  }
+
+  const input: Record<string, unknown> = {}
+
+  if (filters.folderId !== undefined) {
+    input.folderId = filters.folderId
+  }
+
+  if (filters.kind) {
+    input.kind = filters.kind
+  }
+
+  if (filters.uploadedBy) {
+    input.uploadedBy = filters.uploadedBy
+  }
+
+  if (filters.sha256) {
+    input.sha256 = filters.sha256
+  }
+
+  if (filters.search) {
+    input.search = filters.search
+  }
+
+  return Object.keys(input).length > 0 ? input : undefined
+}
+
 export const media = {
   getFolders: async (): Promise<Folder[]> => {
-    await delay()
-    return mockFolders
+    try {
+      const { data } = await apolloClient.query<ListFoldersGraphqlResponse>({
+        query: LIST_FOLDERS,
+        variables: {
+          page: 1,
+          pageSize: DEFAULT_PAGE_SIZE,
+          orderBy: {
+            field: 'NAME',
+            direction: 'ASC',
+          },
+        },
+        fetchPolicy: 'network-only',
+      })
+
+      return data?.folders?.items ?? []
+    } catch (error) {
+      console.error('Failed to load folders via GraphQL:', error)
+      throw new Error('Failed to load folders')
+    }
   },
 
   getAssets: async (filters?: MediaFilters): Promise<MediaAsset[]> => {
-    await delay()
-    let assets = [...mockMediaAssets]
+    try {
+      const { data } = await apolloClient.query<MediaAssetCollectionResponse>({
+        query: GET_MEDIA_ASSETS,
+        variables: {
+          filter: buildMediaFilterInput(filters),
+          page: 1,
+          pageSize: DEFAULT_PAGE_SIZE,
+          orderBy: {
+            field: 'CREATED_AT',
+            direction: 'DESC',
+          },
+        },
+        fetchPolicy: 'network-only',
+      })
 
-    if (filters?.folder_id !== undefined) {
-      assets = assets.filter((a) => a.folder_id === filters.folder_id)
+      return data?.mediaAssetCollection?.items ?? []
+    } catch (error) {
+      console.error('Failed to load media assets via GraphQL:', error)
+      throw new Error('Failed to load media assets')
     }
-    if (filters?.mime_type) {
-      assets = assets.filter((a) => a.mime_type.startsWith(filters.mime_type!))
-    }
-    if (filters?.search) {
-      const search = filters.search.toLowerCase()
-      assets = assets.filter((a) => a.filename.toLowerCase().includes(search))
-    }
-
-    return assets
   },
 
   createFolder: async (data: CreateFolderDto): Promise<Folder> => {
-    await delay()
-    const newFolder: Folder = {
-      id: String(mockFolders.length + 1),
-      name: data.name,
-      parent_id: data.parent_id,
-      created_at: new Date().toISOString(),
-      created_by: 'admin',
-      file_count: 0,
-      total_size: 0,
+    try {
+      const { data: response } = await apolloClient.mutate<CreateFolderGraphqlResponse>({
+        mutation: CREATE_FOLDER,
+        variables: {
+          input: {
+            name: data.name,
+            parentId: data.parentId ?? null,
+          },
+        },
+      })
+
+      if (!response?.createFolder) {
+        throw new Error('Missing createFolder field in response')
+      }
+
+      return response.createFolder
+    } catch (error) {
+      console.error('Failed to create folder via GraphQL:', error)
+      throw new Error('Failed to create folder')
     }
-    mockFolders.push(newFolder)
-    return newFolder
   },
 
   deleteAsset: async (id: string): Promise<void> => {
-    await delay()
-    const index = mockMediaAssets.findIndex((a) => a.id === id)
-    if (index === -1) throw new Error('Asset not found')
-    mockMediaAssets.splice(index, 1)
+    try {
+      const { data } = await apolloClient.mutate<DeleteMediaGraphqlResponse>({
+        mutation: DELETE_MEDIA,
+        variables: { id },
+      })
+
+      if (!data?.deleteMedia) {
+        throw new Error('Failed to delete media')
+      }
+    } catch (error) {
+      console.error('Failed to delete media via GraphQL:', error)
+      throw new Error('Failed to delete media')
+    }
   },
 
   deleteFolder: async (id: string): Promise<void> => {
-    await delay()
-    const index = mockFolders.findIndex((f) => f.id === id)
-    if (index === -1) throw new Error('Folder not found')
-    mockFolders.splice(index, 1)
+    try {
+      const { data } = await apolloClient.mutate<DeleteFolderGraphqlResponse>({
+        mutation: DELETE_FOLDER,
+        variables: { id },
+      })
+
+      if (!data?.deleteFolder) {
+        throw new Error('Failed to delete folder')
+      }
+    } catch (error) {
+      console.error('Failed to delete folder via GraphQL:', error)
+      throw new Error('Failed to delete folder')
+    }
   },
 
   upload: async (
@@ -75,10 +184,9 @@ export const media = {
             kind,
             mimeType: file.type,
             filename: file.name,
-            folderId: folderId ?? undefined,
+            folderId: folderId ?? null,
           },
         },
-        refetchQueries: [{ query: GET_MEDIA_ASSETS }],
       })
 
       if (!data?.uploadMedia) {

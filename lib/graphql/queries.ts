@@ -1,5 +1,134 @@
 import { gql } from '@apollo/client'
 
+// Folder queries and mutations
+export const GET_FOLDER = gql`
+  query GetFolder($id: ID!) {
+    folder(id: $id) {
+      id
+      name
+      parentId
+      depth
+      childrenCount
+      mediaCount
+      createdAt
+      updatedAt
+      parent {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const GET_ROOT_FOLDERS = gql`
+  query GetRootFolders {
+    rootFolders {
+      id
+      name
+      depth
+      childrenCount
+      mediaCount
+      createdAt
+      updatedAt
+    }
+  }
+`
+
+export const GET_FOLDER_TREE = gql`
+  query GetFolderTree($id: ID!) {
+    folderTree(id: $id) {
+      folder {
+        id
+        name
+        depth
+        mediaCount
+      }
+      children {
+        folder {
+          id
+          name
+          depth
+          mediaCount
+        }
+        children {
+          folder {
+            id
+            name
+            depth
+            mediaCount
+          }
+        }
+      }
+    }
+  }
+`
+
+export const GET_FOLDER_PATH = gql`
+  query GetFolderPath($id: ID!) {
+    folderPath(id: $id) {
+      id
+      name
+      depth
+    }
+  }
+`
+
+export const LIST_FOLDERS = gql`
+  query ListFolders(
+    $filter: FolderFilterInput
+    $page: Int
+    $pageSize: Int
+    $orderBy: FolderOrderInput
+  ) {
+    folders(filter: $filter, page: $page, pageSize: $pageSize, orderBy: $orderBy) {
+      items {
+        id
+        name
+        parentId
+        depth
+        childrenCount
+        mediaCount
+        createdAt
+        updatedAt
+      }
+      totalCount
+      page
+      pageSize
+    }
+  }
+`
+
+export const CREATE_FOLDER = gql`
+  mutation CreateFolder($input: CreateFolderInput!) {
+    createFolder(input: $input) {
+      id
+      name
+      parentId
+      depth
+      childrenCount
+      mediaCount
+      createdAt
+      updatedAt
+    }
+  }
+`
+
+export const UPDATE_FOLDER = gql`
+  mutation UpdateFolder($id: ID!, $input: UpdateFolderInput!) {
+    updateFolder(id: $id, input: $input) {
+      id
+      name
+      updatedAt
+    }
+  }
+`
+
+export const DELETE_FOLDER = gql`
+  mutation DeleteFolder($id: ID!) {
+    deleteFolder(id: $id)
+  }
+`
+
 // Topic queries and mutations
 export const GET_TOPICS = gql`
   query GetTopics($search: String) {
@@ -118,11 +247,16 @@ export const DELETE_TAG = gql`
 export const GET_MEDIA_ASSETS = gql`
   query GetMediaAssets(
     $filter: MediaAssetFilterInput
-    $order: MediaAssetOrderInput
     $page: Int
     $pageSize: Int
+    $orderBy: MediaAssetOrderInput
   ) {
-    mediaAssets(filter: $filter, order: $order, page: $page, pageSize: $pageSize) {
+    mediaAssetCollection(
+      filter: $filter
+      page: $page
+      pageSize: $pageSize
+      orderBy: $orderBy
+    ) {
       items {
         id
         storageKey

@@ -17,9 +17,9 @@ export function AssetPreviewDialog({ asset, open, onClose }: AssetPreviewDialogP
 
   if (!asset) return null
 
-  const isImage = asset.mime_type.startsWith("image/")
-  const isVideo = asset.mime_type.startsWith("video/")
-  const isAudio = asset.mime_type.startsWith("audio/")
+  const isImage = asset.mimeType.startsWith("image/")
+  const isVideo = asset.mimeType.startsWith("video/")
+  const isAudio = asset.mimeType.startsWith("audio/")
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + " B"
@@ -49,7 +49,7 @@ export function AssetPreviewDialog({ asset, open, onClose }: AssetPreviewDialogP
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle>{asset.filename}</DialogTitle>
+          <DialogTitle>{asset.originalName}</DialogTitle>
         </DialogHeader>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -57,20 +57,20 @@ export function AssetPreviewDialog({ asset, open, onClose }: AssetPreviewDialogP
             <div className="bg-muted rounded-lg overflow-hidden">
               {isImage && (
                 <img
-                  src={asset.url || "/placeholder.svg"}
-                  alt={asset.filename}
+                  src={asset.thumbnailURL || asset.downloadURL || "/placeholder.svg"}
+                  alt={asset.originalName}
                   className="w-full h-auto max-h-[500px] object-contain"
                 />
               )}
               {isVideo && (
                 <video controls className="w-full h-auto max-h-[500px]">
-                  <source src={asset.url} type={asset.mime_type} />
+                  <source src={asset.downloadURL} type={asset.mimeType} />
                 </video>
               )}
               {isAudio && (
                 <div className="p-12 flex items-center justify-center">
                   <audio controls className="w-full">
-                    <source src={asset.url} type={asset.mime_type} />
+                    <source src={asset.downloadURL} type={asset.mimeType} />
                   </audio>
                 </div>
               )}
@@ -83,19 +83,19 @@ export function AssetPreviewDialog({ asset, open, onClose }: AssetPreviewDialogP
               <dl className="space-y-2 text-sm">
                 <div>
                   <dt className="text-muted-foreground">Size</dt>
-                  <dd className="font-medium">{formatFileSize(asset.size_bytes)}</dd>
+                  <dd className="font-medium">{formatFileSize(asset.bytes)}</dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Type</dt>
-                  <dd className="font-medium">{asset.mime_type}</dd>
+                  <dd className="font-medium">{asset.mimeType}</dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Uploaded</dt>
-                  <dd className="font-medium">{formatDate(asset.uploaded_at)}</dd>
+                  <dd className="font-medium">{formatDate(asset.createdAt)}</dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Uploaded by</dt>
-                  <dd className="font-medium">{asset.uploaded_by}</dd>
+                  <dd className="font-medium">{asset.uploadedBy || "Unknown"}</dd>
                 </div>
               </dl>
             </div>
@@ -104,7 +104,7 @@ export function AssetPreviewDialog({ asset, open, onClose }: AssetPreviewDialogP
               <Button
                 variant="outline"
                 className="w-full justify-start bg-transparent"
-                onClick={() => copyToClipboard(asset.storage_key, "Storage key")}
+                onClick={() => copyToClipboard(asset.storageKey, "Storage key")}
               >
                 <Copy className="h-4 w-4 mr-2" />
                 Copy Storage Key
@@ -112,12 +112,20 @@ export function AssetPreviewDialog({ asset, open, onClose }: AssetPreviewDialogP
               <Button
                 variant="outline"
                 className="w-full justify-start bg-transparent"
-                onClick={() => copyToClipboard(asset.url, "URL")}
+                onClick={() => copyToClipboard(asset.downloadURL, "URL")}
               >
                 <Copy className="h-4 w-4 mr-2" />
                 Copy URL
               </Button>
-              <Button variant="outline" className="w-full justify-start bg-transparent">
+              <Button
+                variant="outline"
+                className="w-full justify-start bg-transparent"
+                onClick={() => {
+                  if (asset.downloadURL && asset.downloadURL !== "#") {
+                    window.open(asset.downloadURL, "_blank")
+                  }
+                }}
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Download
               </Button>

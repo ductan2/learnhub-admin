@@ -4,7 +4,9 @@ import { ErrorLink } from '@apollo/client/link/error'
 
 // Create HTTP link
 const httpLink = new HttpLink({
-    uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:8010/graphql',
+    uri:
+        process.env.NEXT_PUBLIC_GRAPHQL_URL ||
+        'http://localhost:8010/api/v1/content/graphql',
 })
 
 // Auth link to add authorization header
