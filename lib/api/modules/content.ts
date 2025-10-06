@@ -31,175 +31,151 @@ import {
   UPLOAD_MEDIA,
   DELETE_MEDIA
 } from '@/lib/graphql/queries'
-import { mockTopics, mockLevels, mockTags } from '@/lib/mock-data'
+import type { DocumentNode } from '@apollo/client'
 
-export const topics = {
-  getAll: async (search?: string): Promise<Topic[]> => {
-    try {
-      const { data } = await apolloClient.query({
-        query: GET_TOPICS,
-        fetchPolicy: 'cache-first'
-      })
-      return (data as any).topics || []
-    } catch (err) {
-      console.error('Failed to fetch topics from GraphQL:', err)
-      return mockTopics
-    }
-  },
-
-  create: async (data: CreateTopicDto): Promise<Topic> => {
-    try {
-      const { data: result } = await apolloClient.mutate({
-        mutation: CREATE_TOPIC,
-        variables: { input: data },
-        refetchQueries: [{ query: GET_TOPICS }]
-      })
-      return (result as any).createTopic
-    } catch (err) {
-      console.error('Failed to create topic via GraphQL:', err)
-      throw new Error('Failed to create topic')
-    }
-  },
-
-  update: async (id: string, data: UpdateTopicDto): Promise<Topic> => {
-    try {
-      const { data: result } = await apolloClient.mutate({
-        mutation: UPDATE_TOPIC,
-        variables: { id, input: data },
-        refetchQueries: [{ query: GET_TOPICS }]
-      })
-      return (result as any).updateTopic
-    } catch (err) {
-      console.error('Failed to update topic via GraphQL:', err)
-      throw new Error('Failed to update topic')
-    }
-  },
-
-  delete: async (id: string): Promise<void> => {
-    try {
-      await apolloClient.mutate({
-        mutation: DELETE_TOPIC,
-        variables: { id },
-        refetchQueries: [{ query: GET_TOPICS }]
-      })
-    } catch (err) {
-      console.error('Failed to delete topic via GraphQL:', err)
-      throw new Error('Failed to delete topic')
-    }
-  },
+type GraphqlCrudModule<TItem, TCreate, TUpdate> = {
+  getAll: (search?: string) => Promise<TItem[]>
+  create: (data: TCreate) => Promise<TItem>
+  update: (id: string, data: TUpdate) => Promise<TItem>
+  delete: (id: string) => Promise<void>
 }
 
-export const levels = {
-  getAll: async (search?: string): Promise<Level[]> => {
-    try {
-      const { data } = await apolloClient.query({
-        query: GET_LEVELS,
-        fetchPolicy: 'cache-first'
-      })
-      return (data as any).levels || []
-    } catch (err) {
-      console.error('Failed to fetch levels from GraphQL:', err)
-      return mockLevels
-    }
-  },
-
-  create: async (data: CreateLevelDto): Promise<Level> => {
-    try {
-      const { data: result } = await apolloClient.mutate({
-        mutation: CREATE_LEVEL,
-        variables: { input: data },
-        refetchQueries: [{ query: GET_LEVELS }]
-      })
-      return (result as any).createLevel
-    } catch (err) {
-      console.error('Failed to create level via GraphQL:', err)
-      throw new Error('Failed to create level')
-    }
-  },
-
-  update: async (id: string, data: UpdateLevelDto): Promise<Level> => {
-    try {
-      const { data: result } = await apolloClient.mutate({
-        mutation: UPDATE_LEVEL,
-        variables: { id, input: data },
-        refetchQueries: [{ query: GET_LEVELS }]
-      })
-      return (result as any).updateLevel
-    } catch (err) {
-      console.error('Failed to update level via GraphQL:', err)
-      throw new Error('Failed to update level')
-    }
-  },
-
-  delete: async (id: string): Promise<void> => {
-    try {
-      await apolloClient.mutate({
-        mutation: DELETE_LEVEL,
-        variables: { id },
-        refetchQueries: [{ query: GET_LEVELS }]
-      })
-    } catch (err) {
-      console.error('Failed to delete level via GraphQL:', err)
-      throw new Error('Failed to delete level')
-    }
-  },
+type GraphqlCrudConfig<TItem, TCreate, TUpdate> = {
+  resourceName: string
+  listQuery: DocumentNode
+  listField: string
+  createMutation: DocumentNode
+  createField: string
+  updateMutation: DocumentNode
+  updateField: string
+  deleteMutation: DocumentNode
 }
 
-export const tags = {
-  getAll: async (search?: string): Promise<Tag[]> => {
-    try {
-      const { data } = await apolloClient.query({
-        query: GET_TAGS,
-        fetchPolicy: 'cache-first'
-      })
-      return (data as any).tags || []
-    } catch (err) {
-      console.error('Failed to fetch tags from GraphQL:', err)
-      return mockTags
-    }
-  },
+const createGraphqlCrudModule = <TItem, TCreate, TUpdate>(
+  config: GraphqlCrudConfig<TItem, TCreate, TUpdate>
+): GraphqlCrudModule<TItem, TCreate, TUpdate> => {
+  const {
+    resourceName,
+    listQuery,
+    listField,
+    createMutation,
+    createField,
+    updateMutation,
+    updateField,
+    deleteMutation,
+  } = config
 
-  create: async (data: CreateTagDto): Promise<Tag> => {
-    try {
-      const { data: result } = await apolloClient.mutate({
-        mutation: CREATE_TAG,
-        variables: { input: data },
-        refetchQueries: [{ query: GET_TAGS }]
-      })
-      return (result as any).createTag
-    } catch (err) {
-      console.error('Failed to create tag via GraphQL:', err)
-      throw new Error('Failed to create tag')
-    }
-  },
+  const refetchQueries = [{ query: listQuery }]
 
-  update: async (id: string, data: UpdateTagDto): Promise<Tag> => {
-    try {
-      const { data: result } = await apolloClient.mutate({
-        mutation: UPDATE_TAG,
-        variables: { id, input: data },
-        refetchQueries: [{ query: GET_TAGS }]
-      })
-      return (result as any).updateTag
-    } catch (err) {
-      console.error('Failed to update tag via GraphQL:', err)
-      throw new Error('Failed to update tag')
-    }
-  },
+  return {
+    getAll: async (_search?: string) => {
+      try {
+        const { data } = await apolloClient.query({
+          query: listQuery,
+          fetchPolicy: 'cache-first',
+        })
+        const items = (data as Record<string, unknown>)[listField]
 
-  delete: async (id: string): Promise<void> => {
-    try {
-      await apolloClient.mutate({
-        mutation: DELETE_TAG,
-        variables: { id },
-        refetchQueries: [{ query: GET_TAGS }]
-      })
-    } catch (err) {
-      console.error('Failed to delete tag via GraphQL:', err)
-      throw new Error('Failed to delete tag')
-    }
-  },
+        if (!Array.isArray(items)) {
+          throw new Error(`Missing ${listField} field in response`)
+        }
+
+        return items as TItem[]
+      } catch (error) {
+        console.error(`Failed to fetch ${resourceName}s from GraphQL:`, error)
+        throw new Error(`Failed to fetch ${resourceName}s`)
+      }
+    },
+
+    create: async (input: TCreate) => {
+      try {
+        const { data } = await apolloClient.mutate({
+          mutation: createMutation,
+          variables: { input },
+          refetchQueries,
+        })
+
+        const createdItem = (data as Record<string, unknown>)[createField]
+
+        if (!createdItem) {
+          throw new Error(`Missing ${createField} field in response`)
+        }
+
+        return createdItem as TItem
+      } catch (error) {
+        console.error(`Failed to create ${resourceName} via GraphQL:`, error)
+        throw new Error(`Failed to create ${resourceName}`)
+      }
+    },
+
+    update: async (id: string, input: TUpdate) => {
+      try {
+        const { data } = await apolloClient.mutate({
+          mutation: updateMutation,
+          variables: { id, input },
+          refetchQueries,
+        })
+
+        const updatedItem = (data as Record<string, unknown>)[updateField]
+
+        if (!updatedItem) {
+          throw new Error(`Missing ${updateField} field in response`)
+        }
+
+        return updatedItem as TItem
+      } catch (error) {
+        console.error(`Failed to update ${resourceName} via GraphQL:`, error)
+        throw new Error(`Failed to update ${resourceName}`)
+      }
+    },
+
+    delete: async (id: string) => {
+      try {
+        await apolloClient.mutate({
+          mutation: deleteMutation,
+          variables: { id },
+          refetchQueries,
+        })
+      } catch (error) {
+        console.error(`Failed to delete ${resourceName} via GraphQL:`, error)
+        throw new Error(`Failed to delete ${resourceName}`)
+      }
+    },
+  }
 }
+
+export const topics = createGraphqlCrudModule<Topic, CreateTopicDto, UpdateTopicDto>({
+  resourceName: 'topic',
+  listQuery: GET_TOPICS,
+  listField: 'topics',
+  createMutation: CREATE_TOPIC,
+  createField: 'createTopic',
+  updateMutation: UPDATE_TOPIC,
+  updateField: 'updateTopic',
+  deleteMutation: DELETE_TOPIC,
+})
+
+export const levels = createGraphqlCrudModule<Level, CreateLevelDto, UpdateLevelDto>({
+  resourceName: 'level',
+  listQuery: GET_LEVELS,
+  listField: 'levels',
+  createMutation: CREATE_LEVEL,
+  createField: 'createLevel',
+  updateMutation: UPDATE_LEVEL,
+  updateField: 'updateLevel',
+  deleteMutation: DELETE_LEVEL,
+})
+
+export const tags = createGraphqlCrudModule<Tag, CreateTagDto, UpdateTagDto>({
+  resourceName: 'tag',
+  listQuery: GET_TAGS,
+  listField: 'tags',
+  createMutation: CREATE_TAG,
+  createField: 'createTag',
+  updateMutation: UPDATE_TAG,
+  updateField: 'updateTag',
+  deleteMutation: DELETE_TAG,
+})
 
 export const media = {
   getAll: async (

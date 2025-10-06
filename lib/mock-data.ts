@@ -2,9 +2,6 @@ import type {
   User,
   Folder,
   MediaAsset,
-  Topic,
-  Level,
-  Tag,
   Lesson,
   Quiz,
   Question,
@@ -78,32 +75,6 @@ export const mockUsers: User[] = [
     current_streak: 3,
   },
   // Add more mock users...
-]
-
-// Mock Topics
-export const mockTopics: Topic[] = [
-  { id: "1", name: "Mathematics", description: "Math courses and lessons", icon: "📐" },
-  { id: "2", name: "Science", description: "Science courses", icon: "🔬" },
-  { id: "3", name: "Programming", description: "Coding and software development", icon: "💻" },
-  { id: "4", name: "Languages", description: "Foreign language learning", icon: "🌍" },
-  { id: "5", name: "Business", description: "Business and entrepreneurship", icon: "💼" },
-]
-
-// Mock Levels
-export const mockLevels: Level[] = [
-  { id: "1", name: "Beginner", order: 1 },
-  { id: "2", name: "Intermediate", order: 2 },
-  { id: "3", name: "Advanced", order: 3 },
-  { id: "4", name: "Expert", order: 4 },
-]
-
-// Mock Tags
-export const mockTags: Tag[] = [
-  { id: "1", name: "STEM", slug: "stem", description: "Science, technology, engineering and mathematics" },
-  { id: "2", name: "Certification", slug: "certification", description: "Content that prepares learners for certification exams" },
-  { id: "3", name: "Project Based", slug: "project-based", description: "Hands-on, practical learning experiences" },
-  { id: "4", name: "Foundational", slug: "foundational", description: "Beginner friendly content that covers the basics" },
-  { id: "5", name: "Advanced", slug: "advanced", description: "In-depth content aimed at advanced learners" },
 ]
 
 // Mock Folders
