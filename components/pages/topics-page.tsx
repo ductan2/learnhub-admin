@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Pencil, Plus, RefreshCw, Search, Shapes, Trash2 } from "lucide-react"
 
 import { api } from "@/lib/api/exports"
@@ -35,11 +35,11 @@ export function TopicsPage() {
 
   const { toast } = useToast()
 
-  const loadTopics = useCallback(async () => {
+  const loadTopics = useCallback(async (search?: string) => {
     setIsLoading(true)
 
     try {
-      const data = await api.topics.getAll()
+      const data = await api.topics.getAll(search)
       const sorted = [...data].sort((a, b) => a.name.localeCompare(b.name))
       setTopics(sorted)
     } catch (error) {
@@ -55,8 +55,14 @@ export function TopicsPage() {
   }, [toast])
 
   useEffect(() => {
-    loadTopics()
-  }, [loadTopics])
+    const handler = setTimeout(() => {
+      loadTopics(searchQuery)
+    }, 300)
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [loadTopics, searchQuery])
 
   const handleDialogChange = (open: boolean) => {
     if (!open) {
@@ -110,19 +116,6 @@ export function TopicsPage() {
     }
   }
 
-  const filteredTopics = useMemo(() => {
-    if (!searchQuery) {
-      return topics
-    }
-
-    const search = searchQuery.toLowerCase().trim()
-    return topics.filter((topic) => {
-      return (
-        topic.name.toLowerCase().includes(search)
-      )
-    })
-  }, [topics, searchQuery])
-
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -131,7 +124,7 @@ export function TopicsPage() {
             Organise your catalogue into meaningful subject areas to power filtering across the platform.
           </p>
           <div className="text-xs text-muted-foreground">
-            Showing {filteredTopics.length} of {topics.length} topics
+            Showing {topics.length} topics
           </div>
         </div>
 
@@ -145,7 +138,12 @@ export function TopicsPage() {
               className="pl-9"
             />
           </div>
-          <Button variant="outline" onClick={loadTopics} disabled={isLoading} className="whitespace-nowrap">
+          <Button
+            variant="outline"
+            onClick={() => loadTopics(searchQuery)}
+            disabled={isLoading}
+            className="whitespace-nowrap"
+          >
             <RefreshCw className="mr-2 h-4 w-4" />
             {isLoading ? "Refreshing" : "Refresh"}
           </Button>
@@ -176,7 +174,7 @@ export function TopicsPage() {
             </Card>
           ))}
         </div>
-      ) : filteredTopics.length === 0 ? (
+      ) : topics.length === 0 ? (
         <Empty className="border border-dashed border-border/60">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -188,7 +186,7 @@ export function TopicsPage() {
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Button onClick={loadTopics} variant="secondary" disabled={isLoading}>
+            <Button onClick={() => loadTopics(searchQuery)} variant="secondary" disabled={isLoading}>
               <RefreshCw className="mr-2 h-4 w-4" />
               Reload topics
             </Button>
@@ -196,7 +194,7 @@ export function TopicsPage() {
         </Empty>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {filteredTopics.map((topic) => (
+          {topics.map((topic) => (
             <Card key={topic.id} className="border-border/60 transition-shadow hover:shadow-lg">
               <CardHeader className="space-y-4 pb-4">
                 <div className="flex items-start justify-between gap-3">

@@ -2,8 +2,8 @@ import { gql } from '@apollo/client'
 
 // Topic queries and mutations
 export const GET_TOPICS = gql`
-  query GetTopics {
-    topics {
+  query GetTopics($search: String) {
+    topics(search: $search) {
       id
       slug
       name
@@ -42,8 +42,8 @@ export const DELETE_TOPIC = gql`
 
 // Level queries and mutations
 export const GET_LEVELS = gql`
-  query GetLevels {
-    levels {
+  query GetLevels($search: String) {
+    levels(search: $search) {
       id
       code
       name
@@ -79,8 +79,8 @@ export const DELETE_LEVEL = gql`
 
 // Tag queries and mutations
 export const GET_TAGS = gql`
-  query GetTags {
-    tags {
+  query GetTags($search: String) {
+    tags(search: $search) {
       id
       slug
       name
