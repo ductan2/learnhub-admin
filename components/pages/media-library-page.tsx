@@ -8,10 +8,11 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { FolderTree } from "@/components/media/folder-tree"
 import { AssetGrid } from "@/components/media/asset-grid"
-import { UploadZone } from "@/components/media/upload-zone"
 import { AssetPreviewDialog } from "@/components/media/asset-preview-dialog"
 import { CreateFolderDialog } from "@/components/media/create-folder-dialog"
+import { UploadDialog } from "@/components/media/upload-dialog"
 import { api } from "@/lib/api/exports"
+import { media } from "@/lib/api/modules/content"
 import type { Folder, MediaAsset } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -33,7 +34,7 @@ export function MediaLibraryPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [searchQuery, setSearchQuery] = useState("")
   const [mimeTypeFilter, setMimeTypeFilter] = useState<string>("all")
-  const [showUploadZone, setShowUploadZone] = useState(false)
+  const [showUploadDialog, setShowUploadDialog] = useState(false)
   const [previewAsset, setPreviewAsset] = useState<MediaAsset | null>(null)
   const [createFolderDialog, setCreateFolderDialog] = useState<{
     open: boolean
@@ -210,7 +211,7 @@ export function MediaLibraryPage() {
         title: "Success",
         description: `${supportedUploads.length} file(s) uploaded successfully`,
       })
-      setShowUploadZone(false)
+      setShowUploadDialog(false)
       await loadAssets()
     } catch (error) {
       console.error(error)
@@ -286,7 +287,7 @@ export function MediaLibraryPage() {
                 </>
               )}
 
-              <Button onClick={() => setShowUploadZone(!showUploadZone)}>
+              <Button onClick={() => setShowUploadDialog(true)}>
                 <Upload className="h-4 w-4 mr-2" />
                 Upload
               </Button>
@@ -330,11 +331,6 @@ export function MediaLibraryPage() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {showUploadZone && (
-            <div className="mb-6">
-              <UploadZone onUpload={handleUpload} currentFolderId={selectedFolderId} />
-            </div>
-          )}
 
           <AssetGrid
             assets={assets}
@@ -359,6 +355,13 @@ export function MediaLibraryPage() {
       </div>
 
       <AssetPreviewDialog asset={previewAsset} open={!!previewAsset} onClose={() => setPreviewAsset(null)} />
+
+      <UploadDialog
+        open={showUploadDialog}
+        onClose={() => setShowUploadDialog(false)}
+        onUpload={handleUpload}
+        currentFolderId={selectedFolderId}
+      />
 
       <CreateFolderDialog
         open={createFolderDialog.open}
