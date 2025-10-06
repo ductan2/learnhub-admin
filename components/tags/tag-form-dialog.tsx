@@ -6,10 +6,10 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { api } from "@/lib/api"
+import { api } from "@/lib/api/exports"
 import type { CreateTagDto, Tag, UpdateTagDto } from "@/lib/types"
+import { convertToSlug } from "@/utils/convert"
 
 interface TagFormDialogProps {
   open: boolean
@@ -22,22 +22,12 @@ interface TagFormDialogProps {
 interface TagFormState {
   name: string
   slug: string
-  description: string
 }
 
 const defaultState: TagFormState = {
   name: "",
   slug: "",
-  description: "",
 }
-
-const slugify = (value: string) =>
-  value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/[\s_-]+/g, "-")
-    .replace(/^-+|-+$/g, "")
 
 export function TagFormDialog({ open, onOpenChange, tag, onSuccess, existingSlugs = [] }: TagFormDialogProps) {
   const { toast } = useToast()
@@ -51,7 +41,6 @@ export function TagFormDialog({ open, onOpenChange, tag, onSuccess, existingSlug
         setFormState({
           name: tag.name,
           slug: tag.slug,
-          description: tag.description ?? "",
         })
         setIsSlugEdited(true)
       } else {
@@ -73,13 +62,13 @@ export function TagFormDialog({ open, onOpenChange, tag, onSuccess, existingSlug
     setFormState((state) => ({
       ...state,
       name: value,
-      slug: isSlugEdited ? state.slug : slugify(value),
+      slug: isSlugEdited ? state.slug : convertToSlug(value),
     }))
   }
 
   const handleSlugChange = (value: string) => {
     setIsSlugEdited(true)
-    setFormState((state) => ({ ...state, slug: slugify(value) }))
+    setFormState((state) => ({ ...state, slug: convertToSlug(value) }))
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -124,7 +113,6 @@ export function TagFormDialog({ open, onOpenChange, tag, onSuccess, existingSlug
       const payloadBase = {
         name: trimmedName,
         slug: trimmedSlug,
-        description: formState.description.trim() || undefined,
       }
 
       if (tag) {
@@ -193,17 +181,6 @@ export function TagFormDialog({ open, onOpenChange, tag, onSuccess, existingSlug
             <p className="text-xs text-muted-foreground">
               Slugs are used in URLs and API filters. Keep them lowercase and use hyphens between words.
             </p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="tag-description">Description</Label>
-            <Textarea
-              id="tag-description"
-              value={formState.description}
-              onChange={(event) => setFormState((state) => ({ ...state, description: event.target.value }))}
-              placeholder="Add context so others know when to apply this tag"
-              rows={4}
-              disabled={isSubmitting}
-            />
           </div>
           <DialogFooter className="gap-2 sm:gap-3">
             <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>

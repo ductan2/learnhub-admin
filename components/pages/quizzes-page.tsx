@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { QuizList } from "@/components/quizzes/quiz-list"
 import { QuizFormDialog } from "@/components/quizzes/quiz-form-dialog"
 import { QuizEditorDialog } from "@/components/quizzes/quiz-editor-dialog"
-import { api } from "@/lib/api"
+import { api } from "@/lib/api/exports"
 import type { Quiz, Topic, Level, CreateQuizDto, QuizQuestion } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import {

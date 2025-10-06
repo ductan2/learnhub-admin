@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { api } from "@/lib/api"
+import { api } from "@/lib/api/exports"
 import type { CreateLevelDto, Level, UpdateLevelDto } from "@/lib/types"
 
 interface LevelFormDialogProps {
@@ -19,16 +19,16 @@ interface LevelFormDialogProps {
 }
 
 interface LevelFormState {
+  code: string
   name: string
-  order: string
 }
 
 const defaultState: LevelFormState = {
+  code: "",
   name: "",
-  order: "1",
 }
 
-export function LevelFormDialog({ open, onOpenChange, level, onSuccess, nextOrder }: LevelFormDialogProps) {
+export function LevelFormDialog({ open, onOpenChange, level, onSuccess }: LevelFormDialogProps) {
   const { toast } = useToast()
   const [formState, setFormState] = useState<LevelFormState>(defaultState)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -37,17 +37,17 @@ export function LevelFormDialog({ open, onOpenChange, level, onSuccess, nextOrde
     if (open) {
       if (level) {
         setFormState({
+          code: level.code,
           name: level.name,
-          order: String(level.order),
         })
       } else {
         setFormState({
+          code: "",
           name: "",
-          order: String(nextOrder ?? 1),
         })
       }
     }
-  }, [level, nextOrder, open])
+  }, [level, open])
 
   const handleClose = () => {
     if (!isSubmitting) {
@@ -57,6 +57,16 @@ export function LevelFormDialog({ open, onOpenChange, level, onSuccess, nextOrde
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+
+    const trimmedCode = formState.code.trim()
+    if (!trimmedCode) {
+      toast({
+        title: "Code is required",
+        description: "Please provide a code for the level.",
+        variant: "destructive",
+      })
+      return
+    }
 
     const trimmedName = formState.name.trim()
     if (!trimmedName) {
@@ -68,22 +78,14 @@ export function LevelFormDialog({ open, onOpenChange, level, onSuccess, nextOrde
       return
     }
 
-    const parsedOrder = Number.parseInt(formState.order, 10)
-    if (Number.isNaN(parsedOrder) || parsedOrder < 1) {
-      toast({
-        title: "Order must be a positive number",
-        description: "Levels are displayed in ascending order.",
-        variant: "destructive",
-      })
-      return
-    }
+
 
     try {
       setIsSubmitting(true)
       if (level) {
         const payload: UpdateLevelDto = {
+          code: trimmedCode,
           name: trimmedName,
-          order: parsedOrder,
         }
         const updatedLevel = await api.levels.update(level.id, payload)
         toast({
@@ -93,8 +95,8 @@ export function LevelFormDialog({ open, onOpenChange, level, onSuccess, nextOrde
         onSuccess?.(updatedLevel)
       } else {
         const payload: CreateLevelDto = {
+          code: trimmedCode,
           name: trimmedName,
-          order: parsedOrder,
         }
         const createdLevel = await api.levels.create(payload)
         toast({
@@ -124,6 +126,19 @@ export function LevelFormDialog({ open, onOpenChange, level, onSuccess, nextOrde
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
+            <Label htmlFor="level-code">
+              Level code <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="level-code"
+              value={formState.code}
+              onChange={(event) => setFormState((state) => ({ ...state, code: event.target.value }))}
+              placeholder="e.g. A1"
+              required
+              disabled={isSubmitting}
+            />
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="level-name">
               Level name <span className="text-destructive">*</span>
             </Label>
@@ -136,24 +151,6 @@ export function LevelFormDialog({ open, onOpenChange, level, onSuccess, nextOrde
               autoFocus
               disabled={isSubmitting}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="level-order">
-              Display order <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="level-order"
-              type="number"
-              min={1}
-              value={formState.order}
-              onChange={(event) => setFormState((state) => ({ ...state, order: event.target.value }))}
-              placeholder="1"
-              required
-              disabled={isSubmitting}
-            />
-            <p className="text-xs text-muted-foreground">
-              Levels are shown from lowest to highest order.
-            </p>
           </div>
           <DialogFooter className="gap-2 sm:gap-3">
             <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>

@@ -38,7 +38,7 @@ import {
   Globe,
 } from "lucide-react"
 import type { User, Enrollment, QuizAttempt } from "@/lib/types"
-import { api } from "@/lib/api"
+import { api } from "@/lib/api/exports"
 import { useToast } from "@/hooks/use-toast"
 
 interface UserDetailDialogProps {

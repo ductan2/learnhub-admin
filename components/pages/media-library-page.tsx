@@ -11,7 +11,7 @@ import { AssetGrid } from "@/components/media/asset-grid"
 import { UploadZone } from "@/components/media/upload-zone"
 import { AssetPreviewDialog } from "@/components/media/asset-preview-dialog"
 import { CreateFolderDialog } from "@/components/media/create-folder-dialog"
-import { api } from "@/lib/api"
+import { api } from "@/lib/api/exports"
 import type { Folder, MediaAsset } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import {

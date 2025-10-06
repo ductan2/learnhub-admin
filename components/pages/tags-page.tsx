@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Hash, Pencil, Plus, RefreshCw, Search, Tag as TagIcon, Trash2 } from "lucide-react"
 
-import { api } from "@/lib/api"
+import { api } from "@/lib/api/exports"
 import type { Tag } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
@@ -125,8 +125,7 @@ export function TagsPage() {
     const search = searchQuery.toLowerCase().trim()
     return tags.filter((tag) => {
       return (
-        tag.name.toLowerCase().includes(search) || tag.slug.toLowerCase().includes(search) ||
-        (tag.description?.toLowerCase().includes(search) ?? false)
+        tag.name.toLowerCase().includes(search) || tag.slug.toLowerCase().includes(search)
       )
     })
   }, [tags, searchQuery])
@@ -261,7 +260,6 @@ export function TagsPage() {
                 <TableRow>
                   <TableHead className="w-[200px]">Name</TableHead>
                   <TableHead className="w-[200px]">Slug</TableHead>
-                  <TableHead>Description</TableHead>
                   <TableHead className="w-32 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -275,9 +273,6 @@ export function TagsPage() {
                       {tag.name}
                     </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">{tag.slug}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {tag.description ?? "—"}
-                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
                         <Button

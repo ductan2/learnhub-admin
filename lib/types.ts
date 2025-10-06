@@ -34,56 +34,76 @@ export interface Folder {
 
 export interface MediaAsset {
   id: string
-  storage_key: string
-  filename: string
-  mime_type: string
-  size_bytes: number
-  folder_id: string | null
-  uploaded_by: string
-  uploaded_at: string
-  thumbnail_url?: string
-  url: string
+  storageKey: string
+  kind: 'IMAGE' | 'AUDIO'
+  mimeType: string
+  folderId: string | null
+  originalName: string
+  thumbnailURL?: string
+  bytes: number
+  durationMs?: number
+  sha256: string
+  createdAt: string
+  uploadedBy: string
+  downloadURL: string
+}
+
+export interface MediaAssetFilter {
+  folderId?: string
+  kind?: 'IMAGE' | 'AUDIO'
+  uploadedBy?: string
+  sha256?: string
+  search?: string
+}
+
+export interface MediaAssetOrder {
+  field: 'CREATED_AT' | 'BYTES'
+  direction: 'ASC' | 'DESC'
+}
+
+export interface MediaAssetCollection {
+  items: MediaAsset[]
+  totalCount: number
+  page: number
+  pageSize: number
 }
 
 export interface Topic {
   id: string
+  slug: string
   name: string
-  description?: string
-  icon?: string
+  createdAt: string
 }
 
 export interface CreateTopicDto {
+  slug: string
   name: string
-  description?: string
-  icon?: string
 }
 
 export type UpdateTopicDto = Partial<CreateTopicDto>
 
 export interface Tag {
   id: string
-  name: string
   slug: string
-  description?: string
+  name: string
 }
 
 export interface CreateTagDto {
-  name: string
   slug: string
-  description?: string
+  name: string
 }
 
 export type UpdateTagDto = Partial<CreateTagDto>
 
 export interface Level {
   id: string
+  code: string
   name: string
-  order: number
 }
 
 export interface CreateLevelDto {
+  code: string
   name: string
-  order?: number
 }
 
 export type UpdateLevelDto = Partial<CreateLevelDto>
@@ -126,6 +146,8 @@ export interface Quiz {
   question_count?: number
   average_score?: number
   attempt_count?: number
+
+  lesson_id: string // TODO: remove this after integration api 
   created_at: string
   updated_at: string
 }
@@ -278,7 +300,7 @@ export interface CreateLessonDto {
   is_published?: boolean
 }
 
-export interface UpdateLessonDto extends Partial<CreateLessonDto> {}
+export interface UpdateLessonDto extends Partial<CreateLessonDto> { }
 
 export interface CreateQuizDto {
   title: string
@@ -337,7 +359,7 @@ export interface CreateCourseDto {
   lesson_ids?: string[]
 }
 
-export interface UpdateCourseDto extends Partial<CreateCourseDto> {}
+export interface UpdateCourseDto extends Partial<CreateCourseDto> { }
 
 export interface AddLessonToCourseDto {
   course_id: string

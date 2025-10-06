@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { api } from "@/lib/api"
+import { api } from "@/lib/api/exports"
 import { Plus, Search, GripVertical, X, BookOpen } from "lucide-react"
 import type { Course, Lesson, Topic, Level } from "@/lib/types"
 

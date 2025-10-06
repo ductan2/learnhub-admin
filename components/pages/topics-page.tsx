@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Pencil, Plus, RefreshCw, Search, Shapes, Trash2 } from "lucide-react"
 
-import { api } from "@/lib/api"
+import { api } from "@/lib/api/exports"
 import type { Topic } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
@@ -118,8 +118,7 @@ export function TopicsPage() {
     const search = searchQuery.toLowerCase().trim()
     return topics.filter((topic) => {
       return (
-        topic.name.toLowerCase().includes(search) ||
-        (topic.description?.toLowerCase().includes(search) ?? false)
+        topic.name.toLowerCase().includes(search)
       )
     })
   }, [topics, searchQuery])
@@ -203,13 +202,10 @@ export function TopicsPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-lg font-semibold">
-                      {topic.icon ?? <Shapes className="h-5 w-5 text-primary" />}
+                      <Shapes className="h-5 w-5 text-primary" />
                     </div>
                     <div>
                       <CardTitle className="text-lg font-semibold">{topic.name}</CardTitle>
-                      {topic.description && (
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{topic.description}</p>
-                      )}
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
@@ -242,12 +238,10 @@ export function TopicsPage() {
                   <span>ID</span>
                   <span className="font-mono text-xs text-foreground/80">{topic.id}</span>
                 </div>
-                {topic.icon && (
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>Icon</span>
-                    <span>{topic.icon}</span>
+                    <span>Slug</span>
+                    <span className="font-mono text-xs text-foreground/80">{topic.slug}</span>
                   </div>
-                )}
               </CardContent>
             </Card>
           ))}

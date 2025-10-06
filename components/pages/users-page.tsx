@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { UserList } from "@/components/users/user-list"
 import { UserDetailDialog } from "@/components/users/user-detail-dialog"
-import { api } from "@/lib/api"
+import { api } from "@/lib/api/exports"
 import type { User } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 

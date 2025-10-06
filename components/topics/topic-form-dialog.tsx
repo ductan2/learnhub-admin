@@ -6,10 +6,10 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { api } from "@/lib/api"
+import { api } from "@/lib/api/exports"
 import type { CreateTopicDto, Topic, UpdateTopicDto } from "@/lib/types"
+import { convertToSlug } from "@/utils/convert"
 
 interface TopicFormDialogProps {
   open: boolean
@@ -20,14 +20,10 @@ interface TopicFormDialogProps {
 
 interface TopicFormState {
   name: string
-  description: string
-  icon: string
 }
 
 const defaultState: TopicFormState = {
-  name: "",
-  description: "",
-  icon: "",
+  name: "", 
 }
 
 export function TopicFormDialog({ open, onOpenChange, topic, onSuccess }: TopicFormDialogProps) {
@@ -40,8 +36,6 @@ export function TopicFormDialog({ open, onOpenChange, topic, onSuccess }: TopicF
       if (topic) {
         setFormState({
           name: topic.name,
-          description: topic.description ?? "",
-          icon: topic.icon ?? "",
         })
       } else {
         setFormState(defaultState)
@@ -73,8 +67,7 @@ export function TopicFormDialog({ open, onOpenChange, topic, onSuccess }: TopicF
       if (topic) {
         const payload: UpdateTopicDto = {
           name: trimmedName,
-          description: formState.description.trim() || undefined,
-          icon: formState.icon.trim() || undefined,
+          slug: convertToSlug(trimmedName),
         }
         const updatedTopic = await api.topics.update(topic.id, payload)
         toast({
@@ -85,8 +78,7 @@ export function TopicFormDialog({ open, onOpenChange, topic, onSuccess }: TopicF
       } else {
         const payload: CreateTopicDto = {
           name: trimmedName,
-          description: formState.description.trim() || undefined,
-          icon: formState.icon.trim() || undefined,
+          slug: convertToSlug(trimmedName),
         }
         const createdTopic = await api.topics.create(payload)
         toast({
@@ -129,30 +121,7 @@ export function TopicFormDialog({ open, onOpenChange, topic, onSuccess }: TopicF
               disabled={isSubmitting}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="topic-description">Description</Label>
-            <Textarea
-              id="topic-description"
-              value={formState.description}
-              onChange={(event) => setFormState((state) => ({ ...state, description: event.target.value }))}
-              placeholder="Add a short summary to help admins understand this topic"
-              rows={4}
-              disabled={isSubmitting}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="topic-icon">Icon or emoji</Label>
-            <Input
-              id="topic-icon"
-              value={formState.icon}
-              onChange={(event) => setFormState((state) => ({ ...state, icon: event.target.value }))}
-              placeholder="Optional emoji or icon identifier"
-              disabled={isSubmitting}
-            />
-            <p className="text-xs text-muted-foreground">
-              Use an emoji (e.g. 🔬) or enter an icon identifier recognised by your design system.
-            </p>
-          </div>
+
           <DialogFooter className="gap-2 sm:gap-3">
             <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
               Cancel

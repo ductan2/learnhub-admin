@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { ListOrdered, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react"
 
-import { api } from "@/lib/api"
+import { api } from "@/lib/api/exports"
 import type { Level } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
@@ -47,8 +47,7 @@ export function LevelsPage() {
     setIsLoading(true)
     try {
       const data = await api.levels.getAll()
-      const sorted = [...data].sort((a, b) => a.order - b.order)
-      setLevels(sorted)
+      setLevels(data)
     } catch (error) {
       console.error("Failed to load levels", error)
       toast({
@@ -88,7 +87,7 @@ export function LevelsPage() {
       const updated = exists
         ? previous.map((item) => (item.id === mutatedLevel.id ? mutatedLevel : item))
         : [...previous, mutatedLevel]
-      return updated.sort((a, b) => a.order - b.order)
+      return updated
     })
   }
 
@@ -125,13 +124,6 @@ export function LevelsPage() {
     const search = searchQuery.toLowerCase().trim()
     return levels.filter((level) => level.name.toLowerCase().includes(search))
   }, [levels, searchQuery])
-
-  const nextLevelOrder = useMemo(() => {
-    if (levels.length === 0) {
-      return 1
-    }
-    return Math.max(...levels.map((level) => level.order)) + 1
-  }, [levels])
 
   return (
     <div className="p-6 space-y-6">
@@ -208,7 +200,7 @@ export function LevelsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-24">Order</TableHead>
+                  <TableHead className="w-24">Code</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead className="hidden md:table-cell">Identifier</TableHead>
                   <TableHead className="w-28 text-right">Actions</TableHead>
@@ -220,16 +212,16 @@ export function LevelsPage() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">
-                          {level.order}
+                          {level.code}
                         </div>
                         <Badge variant="secondary" className="md:hidden">
-                          #{level.order}
+                          #{level.id}
                         </Badge>
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">{level.name}</TableCell>
                     <TableCell className="hidden md:table-cell text-muted-foreground font-mono text-xs">
-                      {level.id}
+                      {level.code}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
@@ -263,7 +255,6 @@ export function LevelsPage() {
         onOpenChange={handleDialogChange}
         level={selectedLevel ?? undefined}
         onSuccess={handleLevelMutationSuccess}
-        nextOrder={nextLevelOrder}
       />
       <AlertDialog
         open={Boolean(levelToDelete)}

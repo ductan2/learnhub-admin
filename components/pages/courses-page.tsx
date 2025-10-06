@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Plus, Search, BookOpen, Users, MoreVertical, Edit, Copy, Trash2, Eye, EyeOff, Star } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { api } from "@/lib/api"
+import { api } from "@/lib/api/exports"
 import { CourseFormDialog } from "@/components/courses/course-form-dialog"
 import { CourseLessonsDialog } from "@/components/courses/course-lessons-dialog"
 import type { Course, Topic, Level } from "@/lib/types"

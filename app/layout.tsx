@@ -4,9 +4,12 @@ import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
+import { ApolloProvider } from "@apollo/client/react"
 import QueryProvider from "../lib/providers/query-client-provider"
 import { AuthProvider } from "../lib/auth/auth-context"
+import { apolloClient } from "../lib/graphql/client"
 import "./globals.css"
+import ApolloProviderWrapper from "./ApolloProviderWrapper"
 
 export const metadata: Metadata = {
   title: "LMS Admin Dashboard",
@@ -22,11 +25,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
-        <AuthProvider>
-          <QueryProvider>
-            <Suspense fallback={null}>{children}</Suspense>
-          </QueryProvider>
-        </AuthProvider>
+          <ApolloProviderWrapper>
+          <AuthProvider>
+            <QueryProvider>
+              <Suspense fallback={null}>{children}</Suspense>
+            </QueryProvider>
+          </AuthProvider>
+        </ApolloProviderWrapper>
         <Analytics />
       </body>
     </html>

@@ -5,7 +5,7 @@ import { LeaderboardTable } from "@/components/leaderboard/leaderboard-table"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card } from "@/components/ui/card"
 import { Trophy } from "lucide-react"
-import { api } from "@/lib/api"
+import { api } from "@/lib/api/exports"
 import type { User } from "@/lib/types"
 
 export function LeaderboardPage() {

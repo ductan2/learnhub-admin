@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { AnalyticsDashboard } from "@/components/analytics/analytics-dashboard"
-import { api } from "@/lib/api"
+import { api } from "@/lib/api/exports"
 
 export function DashboardPage() {
   const [stats, setStats] = useState({
