@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Hash, Pencil, Plus, RefreshCw, Search, Tag as TagIcon, Trash2 } from "lucide-react"
 
 import { api } from "@/lib/api/exports"
@@ -43,10 +43,10 @@ export function TagsPage() {
 
   const { toast } = useToast()
 
-  const loadTags = useCallback(async () => {
+  const loadTags = useCallback(async (search?: string) => {
     setIsLoading(true)
     try {
-      const data = await api.tags.getAll()
+      const data = await api.tags.getAll(search)
       const sorted = [...data].sort((a, b) => a.name.localeCompare(b.name))
       setTags(sorted)
     } catch (error) {
@@ -62,8 +62,14 @@ export function TagsPage() {
   }, [toast])
 
   useEffect(() => {
-    loadTags()
-  }, [loadTags])
+    const handler = setTimeout(() => {
+      loadTags(searchQuery)
+    }, 300)
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [loadTags, searchQuery])
 
   const handleDialogChange = (open: boolean) => {
     if (!open) {
@@ -117,19 +123,6 @@ export function TagsPage() {
     }
   }
 
-  const filteredTags = useMemo(() => {
-    if (!searchQuery) {
-      return tags
-    }
-
-    const search = searchQuery.toLowerCase().trim()
-    return tags.filter((tag) => {
-      return (
-        tag.name.toLowerCase().includes(search) || tag.slug.toLowerCase().includes(search)
-      )
-    })
-  }, [tags, searchQuery])
-
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -138,7 +131,7 @@ export function TagsPage() {
             Use tags to add flexible metadata to courses, lessons and quizzes for discovery and automation.
           </p>
           <div className="text-xs text-muted-foreground">
-            Showing {filteredTags.length} of {tags.length} tags
+            Showing {tags.length} tags
           </div>
         </div>
 
@@ -152,7 +145,12 @@ export function TagsPage() {
               className="pl-9"
             />
           </div>
-          <Button variant="outline" onClick={loadTags} disabled={isLoading} className="whitespace-nowrap">
+          <Button
+            variant="outline"
+            onClick={() => loadTags(searchQuery)}
+            disabled={isLoading}
+            className="whitespace-nowrap"
+          >
             <RefreshCw className="mr-2 h-4 w-4" />
             {isLoading ? "Refreshing" : "Refresh"}
           </Button>
@@ -171,8 +169,8 @@ export function TagsPage() {
                 <TagIcon className="h-5 w-5" />
               </div>
               <div>
-                <CardTitle className="text-base font-semibold">Total tags</CardTitle>
-                <p className="text-sm text-muted-foreground">Available to assign across your content.</p>
+                <CardTitle className="text-base font-semibold">Tags returned</CardTitle>
+                <p className="text-sm text-muted-foreground">Currently available from your content service.</p>
               </div>
             </div>
           </CardHeader>
@@ -211,7 +209,7 @@ export function TagsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{filteredTags.length}</p>
+            <p className="text-3xl font-semibold">{tags.length}</p>
           </CardContent>
         </Card>
       </div>
@@ -219,7 +217,7 @@ export function TagsPage() {
       <Card className="border-border/60">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-base font-semibold">Tag directory</CardTitle>
-          <Badge variant="outline">{filteredTags.length} visible</Badge>
+          <Badge variant="outline">{tags.length} visible</Badge>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
@@ -234,7 +232,7 @@ export function TagsPage() {
                 </div>
               ))}
             </div>
-          ) : filteredTags.length === 0 ? (
+          ) : tags.length === 0 ? (
             <div className="p-6">
               <Empty className="border border-dashed border-border/60">
                 <EmptyHeader>
@@ -247,7 +245,7 @@ export function TagsPage() {
                   </EmptyDescription>
                 </EmptyHeader>
                 <EmptyContent>
-                  <Button onClick={loadTags} variant="secondary" disabled={isLoading}>
+                  <Button onClick={() => loadTags(searchQuery)} variant="secondary" disabled={isLoading}>
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Reload tags
                   </Button>
@@ -264,7 +262,7 @@ export function TagsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTags.map((tag) => (
+                {tags.map((tag) => (
                   <TableRow key={tag.id} className="hover:bg-accent/40">
                     <TableCell className="font-medium flex items-center gap-2">
                       <Badge variant="secondary" className="h-6 w-6 shrink-0 items-center justify-center rounded-full p-0">

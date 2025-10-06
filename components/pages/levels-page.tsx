@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { ListOrdered, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react"
 
 import { api } from "@/lib/api/exports"
@@ -43,10 +43,10 @@ export function LevelsPage() {
 
   const { toast } = useToast()
 
-  const loadLevels = useCallback(async () => {
+  const loadLevels = useCallback(async (search?: string) => {
     setIsLoading(true)
     try {
-      const data = await api.levels.getAll()
+      const data = await api.levels.getAll(search)
       setLevels(data)
     } catch (error) {
       console.error("Failed to load levels", error)
@@ -61,8 +61,14 @@ export function LevelsPage() {
   }, [toast])
 
   useEffect(() => {
-    loadLevels()
-  }, [loadLevels])
+    const handler = setTimeout(() => {
+      loadLevels(searchQuery)
+    }, 300)
+
+    return () => {
+      clearTimeout(handler)
+    }
+  }, [loadLevels, searchQuery])
 
   const handleDialogChange = (open: boolean) => {
     if (!open) {
@@ -116,15 +122,6 @@ export function LevelsPage() {
     }
   }
 
-  const filteredLevels = useMemo(() => {
-    if (!searchQuery) {
-      return levels
-    }
-
-    const search = searchQuery.toLowerCase().trim()
-    return levels.filter((level) => level.name.toLowerCase().includes(search))
-  }, [levels, searchQuery])
-
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -133,7 +130,7 @@ export function LevelsPage() {
             Define learner progression and difficulty for courses, lessons and quizzes.
           </p>
           <div className="text-xs text-muted-foreground">
-            Showing {filteredLevels.length} of {levels.length} levels
+            Showing {levels.length} levels
           </div>
         </div>
 
@@ -147,7 +144,12 @@ export function LevelsPage() {
               className="pl-9"
             />
           </div>
-          <Button variant="outline" onClick={loadLevels} disabled={isLoading} className="whitespace-nowrap">
+          <Button
+            variant="outline"
+            onClick={() => loadLevels(searchQuery)}
+            disabled={isLoading}
+            className="whitespace-nowrap"
+          >
             <RefreshCw className="mr-2 h-4 w-4" />
             {isLoading ? "Refreshing" : "Refresh"}
           </Button>
@@ -176,7 +178,7 @@ export function LevelsPage() {
                 </div>
               ))}
             </div>
-          ) : filteredLevels.length === 0 ? (
+          ) : levels.length === 0 ? (
             <div className="p-6">
               <Empty className="border border-dashed border-border/60">
                 <EmptyHeader>
@@ -189,7 +191,7 @@ export function LevelsPage() {
                   </EmptyDescription>
                 </EmptyHeader>
                 <EmptyContent>
-                  <Button onClick={loadLevels} variant="secondary" disabled={isLoading}>
+                  <Button onClick={() => loadLevels(searchQuery)} variant="secondary" disabled={isLoading}>
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Reload levels
                   </Button>
@@ -207,7 +209,7 @@ export function LevelsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLevels.map((level) => (
+                {levels.map((level) => (
                   <TableRow key={level.id} className="hover:bg-accent/40">
                     <TableCell>
                       <div className="flex items-center gap-3">

@@ -68,10 +68,12 @@ const createGraphqlCrudModule = <TItem, TCreate, TUpdate>(
   const refetchQueries = [{ query: listQuery }]
 
   return {
-    getAll: async (_search?: string) => {
+    getAll: async (search?: string) => {
       try {
+        const variables = search && search.trim().length > 0 ? { search: search.trim() } : undefined
         const { data } = await apolloClient.query({
           query: listQuery,
+          variables,
           fetchPolicy: 'cache-first',
         })
         const items = (data as Record<string, unknown>)[listField]
