@@ -37,7 +37,9 @@ export function FolderTree({
   }
 
   const buildTree = (parentId: string | null): FolderType[] => {
-    return folders.filter((f) => f.parent_id === parentId).sort((a, b) => a.name.localeCompare(b.name))
+    return folders
+      .filter((f) => f.parentId === parentId)
+      .sort((a, b) => a.name.localeCompare(b.name))
   }
 
   const renderFolder = (folder: FolderType, level = 0) => {
@@ -70,7 +72,7 @@ export function FolderTree({
               <Folder className="h-4 w-4 text-muted-foreground shrink-0" />
             )}
             <span className="text-sm truncate">{folder.name}</span>
-            <span className="text-xs text-muted-foreground shrink-0">({folder.file_count || 0})</span>
+            <span className="text-xs text-muted-foreground shrink-0">({folder.mediaCount || 0})</span>
           </button>
 
           <DropdownMenu>

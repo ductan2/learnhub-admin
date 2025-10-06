@@ -25,11 +25,16 @@ export interface User {
 export interface Folder {
   id: string
   name: string
-  parent_id: string | null
-  created_at: string
-  created_by: string
-  file_count?: number
-  total_size?: number
+  parentId: string | null
+  depth?: number
+  childrenCount?: number
+  mediaCount?: number
+  createdAt?: string
+  updatedAt?: string
+  parent?: {
+    id: string
+    name: string
+  } | null
 }
 
 export interface MediaAsset {
@@ -37,14 +42,14 @@ export interface MediaAsset {
   storageKey: string
   kind: 'IMAGE' | 'AUDIO'
   mimeType: string
-  folderId: string | null
+  folderId?: string | null
   originalName: string
-  thumbnailURL?: string
+  thumbnailURL?: string | null
   bytes: number
-  durationMs?: number
-  sha256: string
+  durationMs?: number | null
+  sha256?: string
   createdAt: string
-  uploadedBy: string
+  uploadedBy?: string | null
   downloadURL: string
 }
 
@@ -270,8 +275,10 @@ export interface LessonFilters {
 }
 
 export interface MediaFilters {
-  folder_id?: string | null
-  mime_type?: string
+  folderId?: string | null
+  kind?: 'IMAGE' | 'AUDIO'
+  uploadedBy?: string
+  sha256?: string
   search?: string
 }
 
@@ -289,7 +296,7 @@ export interface CourseFilters {
 // DTO types
 export interface CreateFolderDto {
   name: string
-  parent_id: string | null
+  parentId?: string | null
 }
 
 export interface CreateLessonDto {

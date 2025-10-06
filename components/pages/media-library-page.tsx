@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Upload, Grid3x3, List, Search, Trash2, FolderInput } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -28,7 +28,6 @@ import {
 export function MediaLibraryPage() {
   const [folders, setFolders] = useState<Folder[]>([])
   const [assets, setAssets] = useState<MediaAsset[]>([])
-  const [filteredAssets, setFilteredAssets] = useState<MediaAsset[]>([])
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null)
   const [selectedAssets, setSelectedAssets] = useState<Set<string>>(new Set())
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
@@ -48,16 +47,7 @@ export function MediaLibraryPage() {
 
   const { toast } = useToast()
 
-  useEffect(() => {
-    loadFolders()
-    loadAssets()
-  }, [])
-
-  useEffect(() => {
-    filterAssets()
-  }, [assets, selectedFolderId, searchQuery, mimeTypeFilter])
-
-  const loadFolders = async () => {
+  const loadFolders = useCallback(async () => {
     try {
       const data = await api.media.getFolders()
       setFolders(data)
@@ -68,12 +58,38 @@ export function MediaLibraryPage() {
         variant: "destructive",
       })
     }
-  }
+  }, [toast])
 
-  const loadAssets = async () => {
+  const loadAssets = useCallback(async () => {
     try {
-      const data = await api.media.getAssets()
-      setAssets(data)
+      const kindFilter =
+        mimeTypeFilter === "image"
+          ? "IMAGE"
+          : mimeTypeFilter === "audio"
+            ? "AUDIO"
+            : undefined
+
+      const data = await api.media.getAssets({
+        folderId: selectedFolderId ?? undefined,
+        search: searchQuery || undefined,
+        kind: kindFilter,
+      })
+
+      const filteredAssets =
+        mimeTypeFilter === "video"
+          ? data.filter((asset) => asset.mimeType.startsWith("video/"))
+          : data
+
+      setAssets(filteredAssets)
+      setSelectedAssets((prev) => {
+        const next = new Set<string>()
+        filteredAssets.forEach((asset) => {
+          if (prev.has(asset.id)) {
+            next.add(asset.id)
+          }
+        })
+        return next
+      })
     } catch (error) {
       toast({
         title: "Error",
@@ -81,37 +97,27 @@ export function MediaLibraryPage() {
         variant: "destructive",
       })
     }
-  }
+  }, [mimeTypeFilter, searchQuery, selectedFolderId, toast])
 
-  const filterAssets = () => {
-    let filtered = [...assets]
+  useEffect(() => {
+    loadFolders()
+  }, [loadFolders])
 
-    if (selectedFolderId !== null) {
-      filtered = filtered.filter((a) => a.folder_id === selectedFolderId)
-    }
-
-    if (searchQuery) {
-      filtered = filtered.filter((a) => a.filename.toLowerCase().includes(searchQuery.toLowerCase()))
-    }
-
-    if (mimeTypeFilter !== "all") {
-      filtered = filtered.filter((a) => a.mime_type.startsWith(mimeTypeFilter))
-    }
-
-    setFilteredAssets(filtered)
-  }
+  useEffect(() => {
+    loadAssets()
+  }, [loadAssets])
 
   const handleCreateFolder = async (name: string) => {
     try {
       await api.media.createFolder({
         name,
-        parent_id: createFolderDialog.parentId,
+        parentId: createFolderDialog.parentId,
       })
       toast({
         title: "Success",
         description: "Folder created successfully",
       })
-      loadFolders()
+      await loadFolders()
     } catch (error) {
       toast({
         title: "Error",
@@ -128,9 +134,11 @@ export function MediaLibraryPage() {
         title: "Success",
         description: "Folder deleted successfully",
       })
-      loadFolders()
+      await loadFolders()
       if (selectedFolderId === folderId) {
         setSelectedFolderId(null)
+      } else {
+        await loadAssets()
       }
     } catch (error) {
       toast({
@@ -148,7 +156,7 @@ export function MediaLibraryPage() {
         title: "Success",
         description: "File deleted successfully",
       })
-      loadAssets()
+      await loadAssets()
       setSelectedAssets((prev) => {
         const next = new Set(prev)
         next.delete(assetId)
@@ -224,7 +232,7 @@ export function MediaLibraryPage() {
         description: `${selectedAssets.size} file(s) deleted successfully`,
       })
       setSelectedAssets(new Set())
-      loadAssets()
+      await loadAssets()
     } catch (error) {
       toast({
         title: "Error",
@@ -260,7 +268,7 @@ export function MediaLibraryPage() {
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold">{currentFolder ? currentFolder.name : "All Files"}</h2>
               {currentFolder && (
-                <span className="text-sm text-muted-foreground">({currentFolder.file_count || 0} files)</span>
+                <span className="text-sm text-muted-foreground">({currentFolder.mediaCount || 0} files)</span>
               )}
             </div>
 
@@ -329,7 +337,7 @@ export function MediaLibraryPage() {
           )}
 
           <AssetGrid
-            assets={filteredAssets}
+            assets={assets}
             selectedAssets={selectedAssets}
             onToggleSelect={(id) => {
               setSelectedAssets((prev) => {
@@ -342,7 +350,7 @@ export function MediaLibraryPage() {
                 return next
               })
             }}
-            onSelectAll={() => setSelectedAssets(new Set(filteredAssets.map((a) => a.id)))}
+            onSelectAll={() => setSelectedAssets(new Set(assets.map((a) => a.id)))}
             onDeselectAll={() => setSelectedAssets(new Set())}
             onDeleteAsset={(id) => setDeleteDialog({ open: true, type: "asset", id })}
             onPreviewAsset={setPreviewAsset}
