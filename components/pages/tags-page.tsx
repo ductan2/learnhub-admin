@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Hash, RefreshCw, Search, Tag as TagIcon } from "lucide-react"
+import { Hash, Pencil, Plus, RefreshCw, Search, Tag as TagIcon, Trash2 } from "lucide-react"
 
 import { api } from "@/lib/api"
 import type { Tag } from "@/lib/types"
@@ -20,11 +20,26 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { TagFormDialog } from "@/components/tags/tag-form-dialog"
 
 export function TagsPage() {
   const [tags, setTags] = useState<Tag[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
+  const [showFormDialog, setShowFormDialog] = useState(false)
+  const [selectedTag, setSelectedTag] = useState<Tag | null>(null)
+  const [tagToDelete, setTagToDelete] = useState<Tag | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
 
   const { toast } = useToast()
 
@@ -49,6 +64,58 @@ export function TagsPage() {
   useEffect(() => {
     loadTags()
   }, [loadTags])
+
+  const handleDialogChange = (open: boolean) => {
+    if (!open) {
+      setSelectedTag(null)
+    }
+    setShowFormDialog(open)
+  }
+
+  const handleCreateTag = () => {
+    setSelectedTag(null)
+    setShowFormDialog(true)
+  }
+
+  const handleEditTag = (tag: Tag) => {
+    setSelectedTag(tag)
+    setShowFormDialog(true)
+  }
+
+  const handleTagMutationSuccess = (mutatedTag: Tag) => {
+    setTags((previous) => {
+      const exists = previous.some((item) => item.id === mutatedTag.id)
+      const updated = exists
+        ? previous.map((item) => (item.id === mutatedTag.id ? mutatedTag : item))
+        : [...previous, mutatedTag]
+      return updated.sort((a, b) => a.name.localeCompare(b.name))
+    })
+  }
+
+  const handleDeleteTag = async () => {
+    if (!tagToDelete) return
+
+    const targetTag = tagToDelete
+    try {
+      setIsProcessing(true)
+      await api.tags.delete(targetTag.id)
+      toast({
+        title: "Tag deleted",
+        description: `\"${targetTag.name}\" has been removed from your directory.`,
+      })
+      setTags((previous) => previous.filter((item) => item.id !== targetTag.id))
+    } catch (error) {
+      console.error("Failed to delete tag", error)
+      toast({
+        title: "Unable to delete tag",
+        description: "An error occurred while deleting the tag. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsProcessing(false)
+      setTagToDelete(null)
+    }
+  }
 
   const filteredTags = useMemo(() => {
     if (!searchQuery) {
@@ -89,6 +156,10 @@ export function TagsPage() {
           <Button variant="outline" onClick={loadTags} disabled={isLoading} className="whitespace-nowrap">
             <RefreshCw className="mr-2 h-4 w-4" />
             {isLoading ? "Refreshing" : "Refresh"}
+          </Button>
+          <Button onClick={handleCreateTag} className="whitespace-nowrap">
+            <Plus className="mr-2 h-4 w-4" />
+            New tag
           </Button>
         </div>
       </div>
@@ -191,6 +262,7 @@ export function TagsPage() {
                   <TableHead className="w-[200px]">Name</TableHead>
                   <TableHead className="w-[200px]">Slug</TableHead>
                   <TableHead>Description</TableHead>
+                  <TableHead className="w-32 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -206,6 +278,26 @@ export function TagsPage() {
                     <TableCell className="text-sm text-muted-foreground">
                       {tag.description ?? "—"}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditTag(tag)}
+                          aria-label={`Edit ${tag.name}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setTagToDelete(tag)}
+                          aria-label={`Delete ${tag.name}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -213,6 +305,40 @@ export function TagsPage() {
           )}
         </CardContent>
       </Card>
+      <TagFormDialog
+        open={showFormDialog}
+        onOpenChange={handleDialogChange}
+        tag={selectedTag ?? undefined}
+        onSuccess={handleTagMutationSuccess}
+        existingSlugs={tags.map((tag) => tag.slug)}
+      />
+      <AlertDialog
+        open={Boolean(tagToDelete)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setTagToDelete(null)
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete tag</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will remove "{tagToDelete?.name}" and unassign it from any content. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isProcessing}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteTag}
+              disabled={isProcessing}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isProcessing ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

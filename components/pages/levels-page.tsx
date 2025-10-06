@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { ListOrdered, RefreshCw, Search } from "lucide-react"
+import { ListOrdered, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react"
 
 import { api } from "@/lib/api"
 import type { Level } from "@/lib/types"
@@ -20,11 +20,26 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { LevelFormDialog } from "@/components/levels/level-form-dialog"
 
 export function LevelsPage() {
   const [levels, setLevels] = useState<Level[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
+  const [showFormDialog, setShowFormDialog] = useState(false)
+  const [selectedLevel, setSelectedLevel] = useState<Level | null>(null)
+  const [levelToDelete, setLevelToDelete] = useState<Level | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
 
   const { toast } = useToast()
 
@@ -50,6 +65,58 @@ export function LevelsPage() {
     loadLevels()
   }, [loadLevels])
 
+  const handleDialogChange = (open: boolean) => {
+    if (!open) {
+      setSelectedLevel(null)
+    }
+    setShowFormDialog(open)
+  }
+
+  const handleCreateLevel = () => {
+    setSelectedLevel(null)
+    setShowFormDialog(true)
+  }
+
+  const handleEditLevel = (level: Level) => {
+    setSelectedLevel(level)
+    setShowFormDialog(true)
+  }
+
+  const handleLevelMutationSuccess = (mutatedLevel: Level) => {
+    setLevels((previous) => {
+      const exists = previous.some((item) => item.id === mutatedLevel.id)
+      const updated = exists
+        ? previous.map((item) => (item.id === mutatedLevel.id ? mutatedLevel : item))
+        : [...previous, mutatedLevel]
+      return updated.sort((a, b) => a.order - b.order)
+    })
+  }
+
+  const handleDeleteLevel = async () => {
+    if (!levelToDelete) return
+
+    const targetLevel = levelToDelete
+    try {
+      setIsProcessing(true)
+      await api.levels.delete(targetLevel.id)
+      toast({
+        title: "Level deleted",
+        description: `\"${targetLevel.name}\" has been removed from the hierarchy.`,
+      })
+      setLevels((previous) => previous.filter((item) => item.id !== targetLevel.id))
+    } catch (error) {
+      console.error("Failed to delete level", error)
+      toast({
+        title: "Unable to delete level",
+        description: "An error occurred while removing the level. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsProcessing(false)
+      setLevelToDelete(null)
+    }
+  }
+
   const filteredLevels = useMemo(() => {
     if (!searchQuery) {
       return levels
@@ -58,6 +125,13 @@ export function LevelsPage() {
     const search = searchQuery.toLowerCase().trim()
     return levels.filter((level) => level.name.toLowerCase().includes(search))
   }, [levels, searchQuery])
+
+  const nextLevelOrder = useMemo(() => {
+    if (levels.length === 0) {
+      return 1
+    }
+    return Math.max(...levels.map((level) => level.order)) + 1
+  }, [levels])
 
   return (
     <div className="p-6 space-y-6">
@@ -84,6 +158,10 @@ export function LevelsPage() {
           <Button variant="outline" onClick={loadLevels} disabled={isLoading} className="whitespace-nowrap">
             <RefreshCw className="mr-2 h-4 w-4" />
             {isLoading ? "Refreshing" : "Refresh"}
+          </Button>
+          <Button onClick={handleCreateLevel} className="whitespace-nowrap">
+            <Plus className="mr-2 h-4 w-4" />
+            New level
           </Button>
         </div>
       </div>
@@ -133,6 +211,7 @@ export function LevelsPage() {
                   <TableHead className="w-24">Order</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead className="hidden md:table-cell">Identifier</TableHead>
+                  <TableHead className="w-28 text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -152,6 +231,26 @@ export function LevelsPage() {
                     <TableCell className="hidden md:table-cell text-muted-foreground font-mono text-xs">
                       {level.id}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditLevel(level)}
+                          aria-label={`Edit ${level.name}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setLevelToDelete(level)}
+                          aria-label={`Delete ${level.name}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -159,6 +258,41 @@ export function LevelsPage() {
           )}
         </CardContent>
       </Card>
+      <LevelFormDialog
+        open={showFormDialog}
+        onOpenChange={handleDialogChange}
+        level={selectedLevel ?? undefined}
+        onSuccess={handleLevelMutationSuccess}
+        nextOrder={nextLevelOrder}
+      />
+      <AlertDialog
+        open={Boolean(levelToDelete)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setLevelToDelete(null)
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete level</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove "{levelToDelete?.name}"? Content linked to this level will
+              remain but will no longer have a level assigned.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isProcessing}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteLevel}
+              disabled={isProcessing}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isProcessing ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

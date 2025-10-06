@@ -31,6 +31,12 @@ import type {
   SubmissionStats,
   GradeSubmissionDto,
   BulkGradeDto,
+  CreateTopicDto,
+  UpdateTopicDto,
+  CreateTagDto,
+  UpdateTagDto,
+  CreateLevelDto,
+  UpdateLevelDto,
 } from "./types"
 import {
   mockUsers,
@@ -69,6 +75,11 @@ const buildContentUrl = (resource: ContentResource, search?: string) => {
     return `${url}?search=${encodeURIComponent(search)}`
   }
   return url
+}
+
+const buildContentItemUrl = (resource: ContentResource, id: string) => {
+  const baseUrl = getContentApiBaseUrl().replace(/\/$/, '')
+  return `${baseUrl}/${resource}/${id}`
 }
 
 const extractResourceArray = <T>(payload: unknown, resource: ContentResource): T => {
@@ -116,6 +127,8 @@ const fetchContentResource = async <T>(resource: ContentResource, search?: strin
   const payload = await response.json()
   return extractResourceArray<T>(payload, resource)
 }
+
+const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
 // API Service
 export const api = {
@@ -213,6 +226,93 @@ export const api = {
         return mockTopics
       }
     },
+
+    create: async (data: CreateTopicDto): Promise<Topic> => {
+      try {
+        const response = await fetch(buildContentUrl('topics'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+        if (response.ok) {
+          const payload = await response.json()
+          if (payload && typeof payload === 'object') {
+            if ('id' in payload) {
+              return payload as Topic
+            }
+            const possibleTopics = extractResourceArray<Topic[]>(payload, 'topics')
+            if (Array.isArray(possibleTopics) && possibleTopics.length > 0) {
+              return possibleTopics[0]
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to create topic via content API:', error)
+      }
+
+      await delay()
+      const newTopic: Topic = {
+        id: generateId(),
+        name: data.name,
+        description: data.description,
+        icon: data.icon,
+      }
+      mockTopics.push(newTopic)
+      return newTopic
+    },
+
+    update: async (id: string, data: UpdateTopicDto): Promise<Topic> => {
+      try {
+        const response = await fetch(buildContentItemUrl('topics', id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+        if (response.ok) {
+          const payload = await response.json()
+          if (payload && typeof payload === 'object') {
+            if ('id' in payload) {
+              return payload as Topic
+            }
+            const possibleTopics = extractResourceArray<Topic[]>(payload, 'topics')
+            if (Array.isArray(possibleTopics) && possibleTopics.length > 0) {
+              const updated = possibleTopics.find((topic) => topic.id === id)
+              return updated ?? possibleTopics[0]
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to update topic via content API:', error)
+      }
+
+      await delay()
+      const index = mockTopics.findIndex((topic) => topic.id === id)
+      if (index === -1) {
+        throw new Error('Topic not found')
+      }
+      mockTopics[index] = { ...mockTopics[index], ...data }
+      return mockTopics[index]
+    },
+
+    delete: async (id: string): Promise<void> => {
+      try {
+        const response = await fetch(buildContentItemUrl('topics', id), {
+          method: 'DELETE',
+        })
+        if (response.ok) {
+          return
+        }
+      } catch (error) {
+        console.error('Failed to delete topic via content API:', error)
+      }
+
+      await delay()
+      const index = mockTopics.findIndex((topic) => topic.id === id)
+      if (index === -1) {
+        throw new Error('Topic not found')
+      }
+      mockTopics.splice(index, 1)
+    },
   },
 
   levels: {
@@ -228,6 +328,100 @@ export const api = {
         return mockLevels
       }
     },
+
+    create: async (data: CreateLevelDto): Promise<Level> => {
+      try {
+        const response = await fetch(buildContentUrl('levels'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+        if (response.ok) {
+          const payload = await response.json()
+          if (payload && typeof payload === 'object') {
+            if ('id' in payload) {
+              return payload as Level
+            }
+            const possibleLevels = extractResourceArray<Level[]>(payload, 'levels')
+            if (Array.isArray(possibleLevels) && possibleLevels.length > 0) {
+              return possibleLevels[0]
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to create level via content API:', error)
+      }
+
+      await delay()
+      const nextOrder =
+        data.order ?? (mockLevels.length > 0 ? Math.max(...mockLevels.map((level) => level.order)) + 1 : 1)
+      const newLevel: Level = {
+        id: generateId(),
+        name: data.name,
+        order: nextOrder,
+      }
+      mockLevels.push(newLevel)
+      return newLevel
+    },
+
+    update: async (id: string, data: UpdateLevelDto): Promise<Level> => {
+      try {
+        const response = await fetch(buildContentItemUrl('levels', id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+        if (response.ok) {
+          const payload = await response.json()
+          if (payload && typeof payload === 'object') {
+            if ('id' in payload) {
+              return payload as Level
+            }
+            const possibleLevels = extractResourceArray<Level[]>(payload, 'levels')
+            if (Array.isArray(possibleLevels) && possibleLevels.length > 0) {
+              const updated = possibleLevels.find((level) => level.id === id)
+              return updated ?? possibleLevels[0]
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to update level via content API:', error)
+      }
+
+      await delay()
+      const index = mockLevels.findIndex((level) => level.id === id)
+      if (index === -1) {
+        throw new Error('Level not found')
+      }
+      const currentLevel = mockLevels[index]
+      const updatedLevel: Level = {
+        ...currentLevel,
+        ...data,
+        order: data.order ?? currentLevel.order,
+      }
+      mockLevels[index] = updatedLevel
+      return updatedLevel
+    },
+
+    delete: async (id: string): Promise<void> => {
+      try {
+        const response = await fetch(buildContentItemUrl('levels', id), {
+          method: 'DELETE',
+        })
+        if (response.ok) {
+          return
+        }
+      } catch (error) {
+        console.error('Failed to delete level via content API:', error)
+      }
+
+      await delay()
+      const index = mockLevels.findIndex((level) => level.id === id)
+      if (index === -1) {
+        throw new Error('Level not found')
+      }
+      mockLevels.splice(index, 1)
+    },
   },
 
   tags: {
@@ -242,6 +436,93 @@ export const api = {
         console.error('Failed to fetch tags from content API:', error)
         return mockTags
       }
+    },
+
+    create: async (data: CreateTagDto): Promise<Tag> => {
+      try {
+        const response = await fetch(buildContentUrl('tags'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+        if (response.ok) {
+          const payload = await response.json()
+          if (payload && typeof payload === 'object') {
+            if ('id' in payload) {
+              return payload as Tag
+            }
+            const possibleTags = extractResourceArray<Tag[]>(payload, 'tags')
+            if (Array.isArray(possibleTags) && possibleTags.length > 0) {
+              return possibleTags[0]
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to create tag via content API:', error)
+      }
+
+      await delay()
+      const newTag: Tag = {
+        id: generateId(),
+        name: data.name,
+        slug: data.slug,
+        description: data.description,
+      }
+      mockTags.push(newTag)
+      return newTag
+    },
+
+    update: async (id: string, data: UpdateTagDto): Promise<Tag> => {
+      try {
+        const response = await fetch(buildContentItemUrl('tags', id), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        })
+        if (response.ok) {
+          const payload = await response.json()
+          if (payload && typeof payload === 'object') {
+            if ('id' in payload) {
+              return payload as Tag
+            }
+            const possibleTags = extractResourceArray<Tag[]>(payload, 'tags')
+            if (Array.isArray(possibleTags) && possibleTags.length > 0) {
+              const updated = possibleTags.find((tag) => tag.id === id)
+              return updated ?? possibleTags[0]
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to update tag via content API:', error)
+      }
+
+      await delay()
+      const index = mockTags.findIndex((tag) => tag.id === id)
+      if (index === -1) {
+        throw new Error('Tag not found')
+      }
+      mockTags[index] = { ...mockTags[index], ...data }
+      return mockTags[index]
+    },
+
+    delete: async (id: string): Promise<void> => {
+      try {
+        const response = await fetch(buildContentItemUrl('tags', id), {
+          method: 'DELETE',
+        })
+        if (response.ok) {
+          return
+        }
+      } catch (error) {
+        console.error('Failed to delete tag via content API:', error)
+      }
+
+      await delay()
+      const index = mockTags.findIndex((tag) => tag.id === id)
+      if (index === -1) {
+        throw new Error('Tag not found')
+      }
+      mockTags.splice(index, 1)
     },
   },
 
