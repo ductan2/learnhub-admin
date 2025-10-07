@@ -115,6 +115,7 @@ export type UpdateLevelDto = Partial<CreateLevelDto>
 
 export interface Lesson {
   id: string
+  code?: string
   title: string
   description?: string
   topic_id: string
@@ -122,6 +123,8 @@ export interface Lesson {
   is_published: boolean
   created_at: string
   updated_at: string
+  published_at?: string | null
+  created_by?: string
   version: number
   enrollment_count?: number
   completion_rate?: number
@@ -272,6 +275,7 @@ export interface LessonFilters {
   level_id?: string
   is_published?: boolean
   search?: string
+  created_by?: string
 }
 
 export interface MediaFilters {
@@ -300,10 +304,12 @@ export interface CreateFolderDto {
 }
 
 export interface CreateLessonDto {
+  code?: string
   title: string
   description?: string
   topic_id: string
   level_id: string
+  created_by?: string
   is_published?: boolean
 }
 
