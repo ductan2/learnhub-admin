@@ -1,6 +1,7 @@
 export interface Lesson {
     id: string
     title: string
+    code?: string
     description?: string
     topic_id: string
     level_id: string
@@ -8,6 +9,8 @@ export interface Lesson {
     created_at: string
     updated_at: string
     version: number
+    published_at?: string | null
+    created_by?: string
     enrollment_count?: number
     completion_rate?: number
 }
@@ -27,15 +30,18 @@ export interface LessonFilters {
     level_id?: string
     is_published?: boolean
     search?: string
+    created_by?: string
 }
 
 // DTO types
 export interface CreateLessonDto {
     title: string
+    code?: string
     description?: string
     topic_id: string
     level_id: string
     is_published?: boolean
+    created_by?: string
 }
 
 export interface UpdateLessonDto extends Partial<CreateLessonDto> { }

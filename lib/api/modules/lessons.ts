@@ -1,4 +1,4 @@
-import type { Lesson, LessonFilters, CreateLessonDto, UpdateLessonDto } from '@/lib/types'
+import type { Lesson, LessonFilters, CreateLessonDto, UpdateLessonDto } from '@/types/lesson'
 import { apolloClient } from '@/lib/graphql/client'
 import {
   CREATE_LESSON,
@@ -8,7 +8,7 @@ import {
   UNPUBLISH_LESSON,
   UPDATE_LESSON,
 } from '@/lib/graphql/queries'
-import type {
+import {
   CreateLessonInput,
   CreateLessonResponse,
   CreateLessonVariables,
@@ -25,13 +25,15 @@ import type {
   UpdateLessonInput,
   UpdateLessonResponse,
   UpdateLessonVariables,
+  LessonOrderField,
+  OrderDirection,
 } from '@/content_schema'
 
 const DEFAULT_LESSON_PAGE_SIZE = 100
 
 const mapLesson = (lesson: GraphqlLesson): Lesson => ({
   id: lesson.id,
-  code: lesson.code,
+  code: lesson.code ?? undefined,
   title: lesson.title,
   description: lesson.description,
   topic_id: lesson.topic?.id ?? '',
@@ -157,8 +159,8 @@ export const lessons = {
         page: 1,
         pageSize: DEFAULT_LESSON_PAGE_SIZE,
         orderBy: {
-          field: 'CREATED_AT',
-          direction: 'DESC',
+          field: LessonOrderField.CREATED_AT,
+          direction: OrderDirection.DESC,
         },
       }
 
