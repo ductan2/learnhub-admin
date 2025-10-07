@@ -1,3 +1,5 @@
+import type { Tag } from "./common"
+
 export interface Quiz {
     id: string
     title: string
@@ -12,8 +14,11 @@ export interface Quiz {
     question_count?: number
     average_score?: number
     attempt_count?: number
+    total_points?: number
+    tags?: Tag[]
+    questions?: QuizQuestion[]
 
-    lesson_id: string // TODO: remove this after integration api 
+    lesson_id: string // TODO: remove this after integration api
     created_at: string
     updated_at: string
 }
@@ -26,6 +31,8 @@ export interface Question {
     points: number
     order: number
     prompt_media_id?: string
+    metadata?: Record<string, any>
+    options?: QuestionOption[]
 }
 
 export interface QuestionOption {
@@ -34,6 +41,7 @@ export interface QuestionOption {
     option_text: string
     is_correct: boolean
     order: number
+    feedback?: string
 }
 
 export interface QuizQuestion {
@@ -46,6 +54,8 @@ export interface QuizQuestion {
     explanation?: string
     correct_answer?: string
     answers?: QuizAnswer[]
+    prompt_media_id?: string
+    metadata?: Record<string, any>
 }
 
 export interface QuizAnswer {
@@ -54,6 +64,7 @@ export interface QuizAnswer {
     answer_text: string
     is_correct: boolean
     order: number
+    feedback?: string
 }
 
 // DTO types
@@ -67,6 +78,7 @@ export interface CreateQuizDto {
     shuffle_questions?: boolean
     shuffle_answers?: boolean
     show_correct_answers?: boolean
+    lesson_id?: string
 }
 
 export interface CreateQuestionDto {
@@ -75,6 +87,7 @@ export interface CreateQuestionDto {
     question_text: string
     points: number
     prompt_media_id?: string
+    metadata?: Record<string, any>
     options?: Array<{
         option_text: string
         is_correct: boolean

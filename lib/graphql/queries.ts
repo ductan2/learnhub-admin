@@ -295,6 +295,188 @@ export const DELETE_MEDIA = gql`
   }
 `
 
+// Quiz queries and mutations
+export const GET_QUIZ = gql`
+  query GetQuiz($id: ID!) {
+    quiz(id: $id) {
+      id
+      lessonId
+      title
+      description
+      totalPoints
+      timeLimitS
+      createdAt
+      tags {
+        id
+        name
+      }
+      questions {
+        id
+        quizId
+        ord
+        type
+        prompt
+        promptMedia
+        points
+        metadata
+        options {
+          id
+          ord
+          label
+          isCorrect
+          feedback
+        }
+      }
+    }
+  }
+`
+
+export const GET_QUIZZES = gql`
+  query GetQuizzes(
+    $lessonId: ID
+    $search: String
+    $page: Int
+    $pageSize: Int
+    $orderBy: QuizOrderInput
+  ) {
+    quizzes(
+      lessonId: $lessonId
+      search: $search
+      page: $page
+      pageSize: $pageSize
+      orderBy: $orderBy
+    ) {
+      items {
+        id
+        lessonId
+        title
+        description
+        totalPoints
+        timeLimitS
+        createdAt
+        tags {
+          id
+          name
+        }
+      }
+      totalCount
+      page
+      pageSize
+    }
+  }
+`
+
+export const GET_QUIZ_QUESTIONS = gql`
+  query GetQuizQuestions(
+    $quizId: ID!
+    $filter: QuizQuestionFilterInput
+    $page: Int
+    $pageSize: Int
+    $orderBy: QuizQuestionOrderInput
+  ) {
+    quizQuestions(
+      quizId: $quizId
+      filter: $filter
+      page: $page
+      pageSize: $pageSize
+      orderBy: $orderBy
+    ) {
+      items {
+        id
+        quizId
+        ord
+        type
+        prompt
+        promptMedia
+        points
+        metadata
+        options {
+          id
+          ord
+          label
+          isCorrect
+          feedback
+        }
+      }
+      totalCount
+      page
+      pageSize
+    }
+  }
+`
+
+export const CREATE_QUIZ = gql`
+  mutation CreateQuiz($input: CreateQuizInput!) {
+    createQuiz(input: $input) {
+      id
+      lessonId
+      title
+      description
+      totalPoints
+      timeLimitS
+      createdAt
+      tags {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const ADD_QUIZ_QUESTION = gql`
+  mutation AddQuizQuestion($quizId: ID!, $input: CreateQuizQuestionInput!) {
+    addQuizQuestion(quizId: $quizId, input: $input) {
+      id
+      quizId
+      ord
+      type
+      prompt
+      promptMedia
+      points
+      metadata
+      options {
+        id
+        ord
+        label
+        isCorrect
+        feedback
+      }
+    }
+  }
+`
+
+export const ADD_QUESTION_OPTION = gql`
+  mutation AddQuestionOption($questionId: ID!, $input: CreateQuestionOptionInput!) {
+    addQuestionOption(questionId: $questionId, input: $input) {
+      id
+      questionId
+      ord
+      label
+      isCorrect
+      feedback
+    }
+  }
+`
+
+export const UPDATE_QUESTION_OPTION = gql`
+  mutation UpdateQuestionOption($id: ID!, $input: UpdateQuestionOptionInput!) {
+    updateQuestionOption(id: $id, input: $input) {
+      id
+      questionId
+      ord
+      label
+      isCorrect
+      feedback
+    }
+  }
+`
+
+export const DELETE_QUESTION_OPTION = gql`
+  mutation DeleteQuestionOption($id: ID!) {
+    deleteQuestionOption(id: $id)
+  }
+`
+
 // Lesson queries and mutations
 export const GET_LESSON = gql`
   query GetLesson($id: ID!) {
