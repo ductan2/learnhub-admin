@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronRight, ChevronDown, Folder, FolderOpen, Plus, MoreVertical, Trash2, Edit2 } from "lucide-react"
+import { ChevronRight, ChevronDown, Folder, FolderOpen, Plus, MoreVertical, Trash2, Edit2, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
@@ -14,6 +14,7 @@ interface FolderTreeProps {
   onCreateFolder: (parentId: string | null) => void
   onDeleteFolder: (folderId: string) => void
   onRenameFolder: (folderId: string) => void
+  onRefresh: () => void
 }
 
 export function FolderTree({
@@ -23,6 +24,7 @@ export function FolderTree({
   onCreateFolder,
   onDeleteFolder,
   onRenameFolder,
+  onRefresh,
 }: FolderTreeProps) {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(["root"]))
 
@@ -109,9 +111,14 @@ export function FolderTree({
     <div className="space-y-1">
       <div className="flex items-center justify-between mb-2 px-2">
         <h3 className="text-sm font-semibold">Folders</h3>
-        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onCreateFolder(null)}>
-          <Plus className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRefresh}>
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => onCreateFolder(null)}>
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <div

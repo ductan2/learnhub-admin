@@ -280,20 +280,10 @@ export const GET_MEDIA_ASSETS = gql`
 `
 
 export const UPLOAD_MEDIA = gql`
-  mutation UploadMedia($input: UploadMediaInput!) {
+  mutation Upload($input: UploadMediaInput!) {
     uploadMedia(input: $input) {
       id
-      storageKey
-      kind
-      mimeType
-      folderId
       originalName
-      thumbnailURL
-      bytes
-      durationMs
-      sha256
-      createdAt
-      uploadedBy
       downloadURL
     }
   }

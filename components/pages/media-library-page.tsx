@@ -12,7 +12,6 @@ import { AssetPreviewDialog } from "@/components/media/asset-preview-dialog"
 import { CreateFolderDialog } from "@/components/media/create-folder-dialog"
 import { UploadDialog } from "@/components/media/upload-dialog"
 import { api } from "@/lib/api/exports"
-import { media } from "@/lib/api/modules/content"
 import type { Folder, MediaAsset } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -117,6 +116,7 @@ export function MediaLibraryPage() {
       toast({
         title: "Success",
         description: "Folder created successfully",
+        variant: "success",
       })
       await loadFolders()
     } catch (error) {
@@ -134,6 +134,7 @@ export function MediaLibraryPage() {
       toast({
         title: "Success",
         description: "Folder deleted successfully",
+        variant: "success",
       })
       await loadFolders()
       if (selectedFolderId === folderId) {
@@ -156,6 +157,7 @@ export function MediaLibraryPage() {
       toast({
         title: "Success",
         description: "File deleted successfully",
+        variant: "success",
       })
       await loadAssets()
       setSelectedAssets((prev) => {
@@ -173,43 +175,43 @@ export function MediaLibraryPage() {
   }
 
   const handleUpload = async (files: File[]) => {
-    const uploads = files.map((file) => ({
-      file,
-      kind: file.type.startsWith("image/")
-        ? "IMAGE"
-        : file.type.startsWith("audio/")
-          ? "AUDIO"
-          : null,
-    }))
-
-    const unsupportedCount = uploads.filter((upload) => upload.kind === null).length
-
-    if (unsupportedCount > 0) {
-      toast({
-        title: "Unsupported files skipped",
-        description: `${unsupportedCount} file(s) must be images or audio to upload`,
-        variant: "destructive",
-      })
+    // Only handle the first file
+    const file = files[0]
+    if (!file) {
+      return
     }
 
-    const supportedUploads = uploads.filter(
-      (upload): upload is { file: File; kind: "IMAGE" | "AUDIO" } => upload.kind !== null,
-    )
+    const kind = file.type.startsWith("image/")
+      ? "IMAGE"
+      : file.type.startsWith("audio/")
+        ? "AUDIO"
+        : null
 
-    if (supportedUploads.length === 0) {
+    if (kind === null) {
+      toast({
+        title: "Unsupported file type",
+        description: "File must be an image or audio to upload",
+        variant: "destructive",
+      })
+      return
+    }
+    if (selectedFolderId === null) {
+      console.log("No folder selected")
+      toast({
+        title: "No folder selected",
+        description: "Please select a folder to upload the file to",
+        variant: "destructive",
+      })
       return
     }
 
     try {
-      await Promise.all(
-        supportedUploads.map(({ file, kind }) =>
-          api.media.upload(file, kind, selectedFolderId ?? undefined),
-        ),
-      )
+      await api.media.upload(file, kind, selectedFolderId ?? undefined)
 
       toast({
         title: "Success",
-        description: `${supportedUploads.length} file(s) uploaded successfully`,
+        description: "File uploaded successfully",
+        variant: "success",
       })
       setShowUploadDialog(false)
       await loadAssets()
@@ -217,7 +219,7 @@ export function MediaLibraryPage() {
       console.error(error)
       toast({
         title: "Error",
-        description: "Failed to upload files",
+        description: "Failed to upload file",
         variant: "destructive",
       })
       return
@@ -231,6 +233,7 @@ export function MediaLibraryPage() {
       toast({
         title: "Success",
         description: `${selectedAssets.size} file(s) deleted successfully`,
+        variant: "success",
       })
       setSelectedAssets(new Set())
       await loadAssets()
@@ -260,6 +263,7 @@ export function MediaLibraryPage() {
               description: "Rename functionality will be added",
             })
           }}
+          onRefresh={loadFolders}
         />
       </div>
 
