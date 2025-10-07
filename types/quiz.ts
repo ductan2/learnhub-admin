@@ -1,11 +1,13 @@
-import type { Tag } from "./common"
+import type { Level, Tag, Topic } from "./common"
 
 export interface Quiz {
     id: string
     title: string
     description?: string
     topic_id: string
-    level_id: string
+    level_id: string 
+    level: Pick<Level, 'id' | 'name'> | undefined
+    topic: Pick<Topic, 'id' | 'name'> | undefined
     time_limit?: number
     passing_score?: number
     shuffle_questions?: boolean

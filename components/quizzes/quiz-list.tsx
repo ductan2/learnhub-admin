@@ -49,9 +49,7 @@ export function QuizList({
   levelFilter,
   onLevelFilterChange,
 }: QuizListProps) {
-  const getTopicName = (topicId: string) => topics.find((t) => t.id === topicId)?.name || "Unknown"
-  const getLevelName = (levelId: string) => levels.find((l) => l.id === levelId)?.name || "Unknown"
-
+  console.log(quizzes)
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -142,10 +140,10 @@ export function QuizList({
                   </div>
                 </div>
 
-                <div className="col-span-2 text-sm">{getTopicName(quiz.topic_id)}</div>
+                <div className="col-span-2 text-sm">{quiz.topic?.name}</div>
 
                 <div className="col-span-2">
-                  <Badge variant="outline">{getLevelName(quiz.level_id)}</Badge>
+                  <Badge variant="outline">{quiz.level?.name}</Badge>
                 </div>
 
                 <div className="col-span-1 text-sm">{quiz.question_count || 0}</div>

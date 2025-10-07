@@ -3,6 +3,8 @@ import {
   GET_QUIZZES,
   GET_QUIZ,
   CREATE_QUIZ,
+  UPDATE_QUIZ,
+  DELETE_QUIZ,
 } from '@/lib/graphql/queries'
 import type {
   Quiz as GraphqlQuiz,
@@ -16,6 +18,25 @@ import type {
   CreateQuizVariables,
 } from '@/content_schema'
 import type { Quiz, CreateQuizDto, QuizQuestion, QuizAnswer } from '@/types/quiz'
+
+type UpdateQuizVariables = {
+  id: string
+  input: {
+    lessonId?: string
+    topicId?: string
+    levelId?: string
+    title?: string
+    description?: string
+    timeLimitS?: number
+  }
+}
+
+type UpdateQuizResponse = {
+  updateQuiz: GraphqlQuiz
+}
+
+type DeleteQuizVariables = { id: string }
+type DeleteQuizResponse = { deleteQuiz: boolean }
 
 const normalizeQuestionType = (type: string): QuizQuestion['type'] => {
   const normalized = type?.toLowerCase()
@@ -91,8 +112,16 @@ const mapQuiz = (quiz: GraphqlQuiz): Quiz => ({
   id: quiz.id,
   title: quiz.title,
   description: quiz.description ?? undefined,
-  topic_id: '',
-  level_id: '',
+  topic_id: (quiz as any).topic?.id ?? '',
+  level_id: (quiz as any).level?.id ?? '',
+  level: (quiz as any).level ? {
+    id: (quiz as any).level.id,
+    name: (quiz as any).level.name,
+  } : undefined,
+  topic: (quiz as any).topic ? {
+    id: (quiz as any).topic.id,
+    name: (quiz as any).topic.name,
+  } : undefined,
   time_limit: quiz.timeLimitS ? Math.round(quiz.timeLimitS / 60) : undefined,
   passing_score: undefined,
   shuffle_questions: undefined,
@@ -117,6 +146,8 @@ const buildCreateQuizInput = (data: CreateQuizDto): CreateQuizVariables['input']
   title: data.title,
   description: data.description || undefined,
   lessonId: data.lesson_id || undefined,
+  topicId: (data as any).topic_id || undefined,
+  levelId: (data as any).level_id || undefined,
   timeLimitS: data.time_limit ? data.time_limit * 60 : undefined,
 })
 
@@ -191,12 +222,55 @@ export const quizzes = {
     }
   },
 
-  update: async () => {
-    throw new Error('Update quiz is not supported via GraphQL yet')
+  update: async (id: string, data: Partial<CreateQuizDto>): Promise<Quiz> => {
+    try {
+      const variables: UpdateQuizVariables = {
+        id,
+        input: {
+          title: data.title,
+          description: data.description,
+          lessonId: data.lesson_id,
+          topicId: (data as any).topic_id, // optional mapping if provided
+          levelId: (data as any).level_id, // optional mapping if provided
+          timeLimitS: typeof data.time_limit === 'number' ? data.time_limit * 60 : undefined,
+        },
+      }
+
+      const { data: response } = await apolloClient.mutate<UpdateQuizResponse, UpdateQuizVariables>({
+        mutation: UPDATE_QUIZ,
+        variables,
+        refetchQueries: [
+          { query: GET_QUIZZES, variables: { page: 1, pageSize: 50 } },
+          { query: GET_QUIZ, variables: { id } },
+        ],
+      })
+
+      if (!response?.updateQuiz) {
+        throw new Error('Missing updateQuiz response')
+      }
+
+      return mapQuiz(response.updateQuiz)
+    } catch (error) {
+      console.error('Failed to update quiz via GraphQL:', error)
+      throw new Error('Failed to update quiz')
+    }
   },
 
-  delete: async () => {
-    throw new Error('Delete quiz is not supported via GraphQL yet')
+  delete: async (id: string): Promise<void> => {
+    try {
+      const { data } = await apolloClient.mutate<DeleteQuizResponse, DeleteQuizVariables>({
+        mutation: DELETE_QUIZ,
+        variables: { id },
+        refetchQueries: [{ query: GET_QUIZZES, variables: { page: 1, pageSize: 50 } }],
+      })
+
+      if (!data?.deleteQuiz) {
+        throw new Error('Failed to delete quiz')
+      }
+    } catch (error) {
+      console.error('Failed to delete quiz via GraphQL:', error)
+      throw new Error('Failed to delete quiz')
+    }
   },
 
   duplicate: async () => {

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Bell, Send, Trash2, Search, CheckCircle2, Circle, AlertTriangle } from "lucide-react"
+import { Bell, Send, Trash2, Search, CheckCircle2, Circle, AlertTriangle, FileText } from "lucide-react"
 import { api } from "@/lib/api/exports"
 import { useToast } from "@/hooks/use-toast"
 import { NotificationStatsCards } from "@/components/notifications/notification-stats"
@@ -15,6 +15,7 @@ import { NotificationTemplatesManager } from "@/components/notifications/templat
 import type { Notification, NotificationStats, NotificationTemplate } from "@/types/notification"
 import type { User } from "@/types/user"
 import { cn } from "@/lib/utils"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 export function NotificationsPage() {
   const { toast } = useToast()
@@ -24,6 +25,7 @@ export function NotificationsPage() {
   const [templates, setTemplates] = useState<NotificationTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [broadcastOpen, setBroadcastOpen] = useState(false)
+  const [templatesOpen, setTemplatesOpen] = useState(false)
   const [filters, setFilters] = useState({
     type: "all",
     priority: "all",
@@ -157,13 +159,16 @@ export function NotificationsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Notifications</h1>
           <p className="text-muted-foreground mt-1">Manage and broadcast notifications to users</p>
         </div>
         <div className="flex gap-2">
+          <Button variant="success" onClick={() => setTemplatesOpen(true)}>
+            <FileText className="h-4 w-4 mr-2" />
+            Templates
+          </Button>
           <Button variant="outline" onClick={handleDeleteExpired}>
             <Trash2 className="h-4 w-4 mr-2" />
             Clean Expired
@@ -177,7 +182,16 @@ export function NotificationsPage() {
 
       {stats && <NotificationStatsCards stats={stats} />}
 
-      <NotificationTemplatesManager templates={templates} onSaveTemplate={handleTemplateUpdate} />
+      <Dialog open={templatesOpen} onOpenChange={setTemplatesOpen}>
+        <DialogContent className="!w-4xl !max-w-4xl max-h-[90vh] overflow-y-auto scroll-smooth">
+          <DialogHeader>
+            <DialogTitle>Notification Templates</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <NotificationTemplatesManager templates={templates} onSaveTemplate={handleTemplateUpdate} />
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Statistics by Type and Priority */}
       {stats && (

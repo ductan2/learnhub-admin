@@ -350,6 +350,8 @@ export interface LessonSectionOrderInput {
 
 export interface CreateQuizInput {
   lessonId?: string;
+  topicId?: string;
+  levelId?: string;
   title: string;
   description?: string;
   timeLimitS?: number;

@@ -301,6 +301,14 @@ export const GET_QUIZ = gql`
     quiz(id: $id) {
       id
       lessonId
+      topic { 
+        id 
+        name
+      }
+      level { 
+        id 
+        name
+      }
       title
       description
       totalPoints
@@ -349,11 +357,21 @@ export const GET_QUIZZES = gql`
       items {
         id
         lessonId
+        topic { id }
+        level { id }
         title
         description
         totalPoints
         timeLimitS
         createdAt
+        topic {
+          id
+          name
+        }
+        level {
+          id
+          name
+        }
         tags {
           id
           name
@@ -414,12 +432,68 @@ export const CREATE_QUIZ = gql`
       description
       totalPoints
       timeLimitS
+      topic {
+        id
+        name
+      }
+      level {
+        id
+        name
+      }
       createdAt
       tags {
         id
         name
       }
     }
+  }
+`
+
+export const UPDATE_QUIZ = gql`
+  mutation UpdateQuiz($id: ID!, $input: UpdateQuizInput!) {
+    updateQuiz(id: $id, input: $input) {
+      id
+      lessonId
+      title
+      description
+      totalPoints
+      timeLimitS
+      topic {
+        id
+        name
+      }
+      level {
+        id
+        name
+      }
+      tags {
+        id
+        name
+      }
+      questions {
+        id
+        quizId
+        ord
+        type
+        prompt
+        promptMedia
+        points
+        metadata
+        options {
+          id
+          ord
+          label
+          isCorrect
+          feedback
+        }
+      }
+    }
+  }
+`
+
+export const DELETE_QUIZ = gql`
+  mutation DeleteQuiz($id: ID!) {
+    deleteQuiz(id: $id)
   }
 `
 

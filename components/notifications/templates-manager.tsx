@@ -64,14 +64,6 @@ export function NotificationTemplatesManager({ templates, onSaveTemplate }: Noti
   }
 
   return (
-    <Card className="p-6 space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold">Email Templates</h2>
-        <p className="text-sm text-muted-foreground">
-          Configure the subject and body that accompany email notifications. Placeholders will be replaced at send time.
-        </p>
-      </div>
-
       <div className="space-y-4">
         {templates.map((template) => {
           const isEditing = editingId === template.id
@@ -168,6 +160,5 @@ export function NotificationTemplatesManager({ templates, onSaveTemplate }: Noti
           )
         })}
       </div>
-    </Card>
   )
 }
