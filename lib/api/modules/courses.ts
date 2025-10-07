@@ -1,4 +1,5 @@
-import type { Course, CourseFilters, CreateCourseDto, UpdateCourseDto, AddLessonToCourseDto, Lesson } from '@/lib/types'
+import type { Course, CourseFilters, CreateCourseDto, UpdateCourseDto, AddLessonToCourseDto } from '@/types/course'
+import type { Lesson } from '@/types/lesson'
 import { delay } from '@/lib/api/utils'
 import { mockCourses, mockCourseLessons, mockLessons } from '@/lib/mock-data'
 

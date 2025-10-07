@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card"
 import { Bell, CheckCircle2, AlertCircle, TrendingUp } from "lucide-react"
-import type { NotificationStats } from "@/lib/types"
+import type { NotificationStats } from "@/types/notification"
 
 interface NotificationStatsProps {
   stats: NotificationStats

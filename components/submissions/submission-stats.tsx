@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card"
 import { FileText, CheckCircle, XCircle, Clock, MessageSquare } from "lucide-react"
-import type { SubmissionStats } from "@/lib/types"
+import type { SubmissionStats } from "@/types/submission"
 
 interface SubmissionStatsProps {
   stats: SubmissionStats

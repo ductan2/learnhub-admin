@@ -1,4 +1,4 @@
-import type { Enrollment } from '@/lib/types'
+import type { Enrollment } from '@/types/common'
 
 export const enrollments = {
   getByUserId: async (userId: string): Promise<Enrollment[]> => {

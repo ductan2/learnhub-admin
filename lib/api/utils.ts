@@ -69,5 +69,3 @@ export const fetchContentResource = async <T>(resource: ContentResource, search?
   const payload = await response.json()
   return extractResourceArray<T>(payload, resource)
 }
-
-export const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`

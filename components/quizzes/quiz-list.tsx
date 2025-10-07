@@ -13,7 +13,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
-import type { Quiz, Topic, Level } from "@/lib/types"
+import type { Quiz } from "@/types/quiz"
+import type { Topic, Level } from "@/types/common"
 
 interface QuizListProps {
   quizzes: Quiz[]

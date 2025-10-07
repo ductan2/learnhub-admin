@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
-import type { MediaAsset } from "@/lib/types"
+import type { MediaAsset } from "@/types/media"
 import { useToast } from "@/hooks/use-toast"
 
 interface AssetGridProps {

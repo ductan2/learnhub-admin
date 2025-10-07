@@ -5,7 +5,8 @@ import { QuizList } from "@/components/quizzes/quiz-list"
 import { QuizFormDialog } from "@/components/quizzes/quiz-form-dialog"
 import { QuizEditorDialog } from "@/components/quizzes/quiz-editor-dialog"
 import { api } from "@/lib/api/exports"
-import type { Quiz, Topic, Level, CreateQuizDto, QuizQuestion } from "@/lib/types"
+import type { Quiz, CreateQuizDto, QuizQuestion } from "@/types/quiz"
+import type { Topic, Level } from "@/types/common"
 import { useToast } from "@/hooks/use-toast"
 import {
   AlertDialog,

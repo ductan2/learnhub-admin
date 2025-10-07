@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { Pencil, Plus, RefreshCw, Search, Shapes, Trash2 } from "lucide-react"
 
 import { api } from "@/lib/api/exports"
-import type { Topic } from "@/lib/types"
+import type { Topic } from "@/types/common"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -236,10 +236,10 @@ export function TopicsPage() {
                   <span>ID</span>
                   <span className="font-mono text-xs text-foreground/80">{topic.id}</span>
                 </div>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span>Slug</span>
-                    <span className="font-mono text-xs text-foreground/80">{topic.slug}</span>
-                  </div>
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>Slug</span>
+                  <span className="font-mono text-xs text-foreground/80">{topic.slug}</span>
+                </div>
               </CardContent>
             </Card>
           ))}

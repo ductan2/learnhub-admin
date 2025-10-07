@@ -4,7 +4,7 @@ import { Trophy, Medal, Award, TrendingUp, Flame } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
-import type { User } from "@/lib/types"
+import type { User } from "@/types/user"
 
 interface LeaderboardTableProps {
   users: User[]

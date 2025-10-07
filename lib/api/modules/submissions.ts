@@ -1,4 +1,4 @@
-import type { Submission, SubmissionFilters, SubmissionStats, GradeSubmissionDto, BulkGradeDto } from '@/lib/types'
+import type { Submission, SubmissionFilters, SubmissionStats, GradeSubmissionDto, BulkGradeDto } from '@/types/submission'
 import { delay } from '@/lib/api/utils'
 import { mockSubmissions, mockUsers } from '@/lib/mock-data'
 

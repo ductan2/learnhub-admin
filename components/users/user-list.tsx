@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
-import type { User } from "@/lib/types"
+import type { User } from "@/types/user"
 
 interface UserListProps {
   users: User[]

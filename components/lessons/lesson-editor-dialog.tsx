@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { LessonSectionsEditor } from "./lesson-sections-editor"
-import type { Lesson, LessonSection } from "@/lib/types"
+import type { Lesson, LessonSection } from "@/types/lesson"
 import { Eye, Save } from "lucide-react"
 
 interface LessonEditorDialogProps {

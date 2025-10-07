@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/hooks/use-toast"
 import { api } from "@/lib/api/exports"
-import type { Course, Topic, Level, CreateCourseDto } from "@/lib/types"
+import type { Course, CreateCourseDto } from "@/types/course"
+import type { Topic, Level } from "@/types/common"
 
 interface CourseFormDialogProps {
   open: boolean

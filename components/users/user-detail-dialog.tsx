@@ -37,7 +37,8 @@ import {
   Calendar,
   Globe,
 } from "lucide-react"
-import type { User, Enrollment, QuizAttempt } from "@/lib/types"
+import type { User } from "@/types/user"
+import type { Enrollment, QuizAttempt } from "@/types/common"
 import { api } from "@/lib/api/exports"
 import { useToast } from "@/hooks/use-toast"
 

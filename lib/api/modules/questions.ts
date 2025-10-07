@@ -1,4 +1,4 @@
-import type { Question, CreateQuestionDto } from '@/lib/types'
+import type { Question, CreateQuestionDto } from '@/types/quiz'
 import { delay } from '@/lib/api/utils'
 import { mockQuestions, mockQuestionOptions } from '@/lib/mock-data'
 

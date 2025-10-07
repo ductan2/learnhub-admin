@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { api } from "@/lib/api/exports"
 import { Plus, Search, GripVertical, X, BookOpen } from "lucide-react"
-import type { Course, Lesson, Topic, Level } from "@/lib/types"
+import type { Course } from "@/types/course"
+import type { Lesson } from "@/types/lesson"
+import type { Topic, Level } from "@/types/common"
 
 interface CourseLessonsDialogProps {
   open: boolean

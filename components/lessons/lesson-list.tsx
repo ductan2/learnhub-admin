@@ -12,7 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
-import type { Lesson, Topic, Level } from "@/lib/types"
+import type { Lesson } from "@/types/lesson"
+import type { Topic, Level } from "@/types/common"
 
 interface LessonListProps {
   lessons: Lesson[]

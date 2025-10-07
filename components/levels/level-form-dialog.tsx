@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { api } from "@/lib/api/exports"
-import type { CreateLevelDto, Level, UpdateLevelDto } from "@/lib/types"
+import type { CreateLevelDto, Level, UpdateLevelDto } from "@/types/common"
 
 interface LevelFormDialogProps {
   open: boolean

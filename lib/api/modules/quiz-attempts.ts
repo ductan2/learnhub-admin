@@ -1,4 +1,4 @@
-import type { QuizAttempt } from '@/lib/types'
+import type { QuizAttempt } from '@/types/common'
 
 export const quizAttempts = {
   getByUserId: async (userId: string): Promise<QuizAttempt[]> => {

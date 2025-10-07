@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card } from "@/components/ui/card"
 import { Trophy } from "lucide-react"
 import { api } from "@/lib/api/exports"
-import type { User } from "@/lib/types"
+import type { User } from "@/types/user"
 
 export function LeaderboardPage() {
   const [period, setPeriod] = useState<"all-time" | "monthly" | "weekly">("all-time")
