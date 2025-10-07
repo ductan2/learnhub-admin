@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { UserList } from "@/components/users/user-list"
 import { UserDetailDialog } from "@/components/users/user-detail-dialog"
 import { api } from "@/lib/api/exports"
-import type { User } from "@/lib/types"
+import type { User } from "@/types/user"
 import { useToast } from "@/hooks/use-toast"
 
 export function UsersPage() {

@@ -1,4 +1,4 @@
-import type { Notification, NotificationFilters, NotificationStats, CreateNotificationDto } from '@/lib/types'
+import type { Notification, NotificationFilters, NotificationStats, CreateNotificationDto } from '@/types/notification'
 import { delay } from '@/lib/api/utils'
 import { mockNotifications, mockUsers } from '@/lib/mock-data'
 

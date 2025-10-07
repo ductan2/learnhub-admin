@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import type { Lesson, Topic, Level, CreateLessonDto } from "@/lib/types"
+import type { Lesson, CreateLessonDto } from "@/types/lesson"
+import type { Topic, Level } from "@/types/common"
 
 interface LessonFormDialogProps {
   open: boolean

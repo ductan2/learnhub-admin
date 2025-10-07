@@ -11,7 +11,8 @@ import { api } from "@/lib/api/exports"
 import { useToast } from "@/hooks/use-toast"
 import { NotificationStatsCards } from "@/components/notifications/notification-stats"
 import { BroadcastDialog } from "@/components/notifications/broadcast-dialog"
-import type { Notification, NotificationStats, User } from "@/lib/types"
+import type { Notification, NotificationStats } from "@/types/notification"
+import type { User } from "@/types/user"
 import { cn } from "@/lib/utils"
 
 export function NotificationsPage() {

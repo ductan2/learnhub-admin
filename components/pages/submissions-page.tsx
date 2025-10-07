@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, FileText, Mic, CheckCircle2, XCircle, Clock, MessageSquare } from "lucide-react"
 import { api } from "@/lib/api/exports"
-import type { Submission, SubmissionStats } from "@/lib/types"
+import type { Submission, SubmissionStats } from "@/types/submission"
 import { SubmissionStatsCards, SubmissionStatsDetails } from "@/components/submissions/submission-stats"
 import { GradeDialog } from "@/components/submissions/grade-dialog"
 import { BulkGradeDialog } from "@/components/submissions/bulk-grade-dialog"
@@ -129,9 +129,8 @@ export function SubmissionsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div>
-        <h2 className="text-3xl font-bold text-foreground">Submissions Review</h2>
         <p className="text-muted-foreground mt-2">Review and grade student speaking and writing submissions</p>
       </div>
 

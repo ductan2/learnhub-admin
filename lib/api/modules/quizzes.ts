@@ -1,4 +1,4 @@
-import type { Quiz, CreateQuizDto } from '@/lib/types'
+import type { Quiz, CreateQuizDto } from '@/types/quiz'
 import { delay } from '@/lib/api/utils'
 import { mockQuizzes as initialMockQuizzes } from '@/lib/mock-data'
 

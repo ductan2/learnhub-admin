@@ -28,7 +28,8 @@ import { useToast } from "@/hooks/use-toast"
 import { api } from "@/lib/api/exports"
 import { CourseFormDialog } from "@/components/courses/course-form-dialog"
 import { CourseLessonsDialog } from "@/components/courses/course-lessons-dialog"
-import type { Course, Topic, Level } from "@/lib/types"
+import type { Course } from "@/types/course"
+import type { Topic, Level } from "@/types/common"
 
 export function CoursesPage() {
   const { toast } = useToast()

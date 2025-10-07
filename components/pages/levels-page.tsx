@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { ListOrdered, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react"
 
 import { api } from "@/lib/api/exports"
-import type { Level } from "@/lib/types"
+import type { Level } from "@/types/common"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"

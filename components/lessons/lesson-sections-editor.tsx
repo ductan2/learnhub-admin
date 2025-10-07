@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import type { LessonSection } from "@/lib/types"
+import type { LessonSection } from "@/types/lesson"
 
 interface LessonSectionsEditorProps {
   lessonId: string
@@ -44,7 +44,7 @@ export function LessonSectionsEditor({ lessonId, sections, onSectionsChange }: L
 
     const newSections = [...sections]
     const targetIndex = direction === "up" ? index - 1 : index + 1
-    ;[newSections[index], newSections[targetIndex]] = [newSections[targetIndex], newSections[index]]
+      ;[newSections[index], newSections[targetIndex]] = [newSections[targetIndex], newSections[index]]
 
     onSectionsChange(newSections.map((s, i) => ({ ...s, order: i + 1 })))
   }

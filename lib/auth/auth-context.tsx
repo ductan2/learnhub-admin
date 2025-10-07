@@ -4,7 +4,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
 import apiClient from '../api/client'
-import { User, LoginRequest, LoginResponse, LogoutResponse } from './types'
+import { LoginRequest, LoginResponse, LogoutResponse } from './types'
+import type { User } from '@/types/user'
 import { toast } from '@/hooks/use-toast'
 
 interface AuthContextType {

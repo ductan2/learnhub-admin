@@ -5,7 +5,7 @@ import { ChevronRight, ChevronDown, Folder, FolderOpen, Plus, MoreVertical, Tras
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
-import type { Folder as FolderType } from "@/lib/types"
+import type { Folder as FolderType } from "@/types/media"
 
 interface FolderTreeProps {
   folders: FolderType[]

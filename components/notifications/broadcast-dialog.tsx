@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { api } from "@/lib/api/exports"
 import { useToast } from "@/hooks/use-toast"
-import type { CreateNotificationDto, User } from "@/lib/types"
+import type { CreateNotificationDto } from "@/types/notification"
+import type { User } from "@/types/user"
 
 interface BroadcastDialogProps {
   open: boolean

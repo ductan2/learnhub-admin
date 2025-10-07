@@ -12,7 +12,7 @@ import { AssetPreviewDialog } from "@/components/media/asset-preview-dialog"
 import { CreateFolderDialog } from "@/components/media/create-folder-dialog"
 import { UploadDialog } from "@/components/media/upload-dialog"
 import { api } from "@/lib/api/exports"
-import type { Folder, MediaAsset } from "@/lib/types"
+import type { Folder, MediaAsset } from "@/types/media"
 import { useToast } from "@/hooks/use-toast"
 import {
   AlertDialog,

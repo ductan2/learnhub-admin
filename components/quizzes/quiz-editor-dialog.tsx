@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { QuestionEditor } from "./question-editor"
-import type { Quiz, QuizQuestion } from "@/lib/types"
+import type { Quiz, QuizQuestion } from "@/types/quiz"
 import { Eye, Save, Check } from "lucide-react"
 import { Card } from "@/components/ui/card"
 

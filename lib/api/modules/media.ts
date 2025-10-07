@@ -1,4 +1,4 @@
-import type { Folder, MediaAsset, MediaFilters, CreateFolderDto } from '@/lib/types'
+import type { Folder, MediaAsset, MediaFilters, CreateFolderDto } from '@/types/media'
 import { apolloClient } from '@/lib/graphql/client'
 import {
   CREATE_FOLDER,

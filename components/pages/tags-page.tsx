@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { Hash, Pencil, Plus, RefreshCw, Search, Tag as TagIcon, Trash2 } from "lucide-react"
 
 import { api } from "@/lib/api/exports"
-import type { Tag } from "@/lib/types"
+import type { Tag } from "@/types/common"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"

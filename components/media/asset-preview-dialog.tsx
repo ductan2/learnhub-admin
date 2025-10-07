@@ -3,7 +3,7 @@
 import { Download, Copy } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import type { MediaAsset } from "@/lib/types"
+import type { MediaAsset } from "@/types/media"
 import { useToast } from "@/hooks/use-toast"
 
 interface AssetPreviewDialogProps {

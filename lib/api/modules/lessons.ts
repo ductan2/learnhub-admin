@@ -1,4 +1,4 @@
-import type { Lesson, LessonFilters, CreateLessonDto, UpdateLessonDto } from '@/lib/types'
+import type { Lesson, LessonFilters, CreateLessonDto, UpdateLessonDto } from '@/types/lesson'
 import { delay } from '@/lib/api/utils'
 import { mockLessons } from '@/lib/mock-data'
 

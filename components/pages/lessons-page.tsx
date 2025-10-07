@@ -5,7 +5,8 @@ import { LessonList } from "@/components/lessons/lesson-list"
 import { LessonFormDialog } from "@/components/lessons/lesson-form-dialog"
 import { LessonEditorDialog } from "@/components/lessons/lesson-editor-dialog"
 import { api } from "@/lib/api/exports"
-import type { Lesson, Topic, Level, CreateLessonDto, LessonSection } from "@/lib/types"
+import type { Lesson, CreateLessonDto, LessonSection } from "@/types/lesson"
+import type { Topic, Level } from "@/types/common"
 import { useToast } from "@/hooks/use-toast"
 import {
   AlertDialog,
