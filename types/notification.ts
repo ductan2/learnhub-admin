@@ -10,6 +10,7 @@ export interface Notification {
     created_at: string
     expires_at?: string
     priority: "low" | "normal" | "high"
+    template_id?: string
 }
 
 export interface NotificationFilters {
@@ -32,6 +33,8 @@ export interface CreateNotificationDto {
     data?: Record<string, any>
     expires_at?: string
     priority?: Notification["priority"]
+    template_id?: string
+    send_email?: boolean
 }
 
 export interface NotificationStats {
@@ -41,4 +44,14 @@ export interface NotificationStats {
     by_type: Record<string, number>
     by_priority: Record<string, number>
     read_rate: number
+}
+
+export interface NotificationTemplate {
+    id: string
+    name: string
+    description?: string
+    subject: string
+    body: string
+    placeholders?: string[]
+    updated_at: string
 }

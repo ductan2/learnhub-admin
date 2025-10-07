@@ -11,7 +11,8 @@ import { api } from "@/lib/api/exports"
 import { useToast } from "@/hooks/use-toast"
 import { NotificationStatsCards } from "@/components/notifications/notification-stats"
 import { BroadcastDialog } from "@/components/notifications/broadcast-dialog"
-import type { Notification, NotificationStats } from "@/types/notification"
+import { NotificationTemplatesManager } from "@/components/notifications/templates-manager"
+import type { Notification, NotificationStats, NotificationTemplate } from "@/types/notification"
 import type { User } from "@/types/user"
 import { cn } from "@/lib/utils"
 
@@ -20,6 +21,7 @@ export function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [stats, setStats] = useState<NotificationStats | null>(null)
   const [users, setUsers] = useState<User[]>([])
+  const [templates, setTemplates] = useState<NotificationTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [broadcastOpen, setBroadcastOpen] = useState(false)
   const [filters, setFilters] = useState({
@@ -32,7 +34,7 @@ export function NotificationsPage() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [notificationsData, statsData, usersData] = await Promise.all([
+      const [notificationsData, statsData, usersData, templatesData] = await Promise.all([
         api.notifications.getAll({
           type: filters.type as any,
           priority: filters.priority as any,
@@ -41,10 +43,12 @@ export function NotificationsPage() {
         }),
         api.notifications.getStats(),
         api.users.getAll(),
+        api.notifications.getTemplates(),
       ])
       setNotifications(notificationsData)
       setStats(statsData)
       setUsers(usersData)
+      setTemplates(templatesData)
     } catch (error) {
       toast({
         title: "Error",
@@ -91,6 +95,24 @@ export function NotificationsPage() {
         description: "Failed to delete notification",
         variant: "destructive",
       })
+    }
+  }
+
+  const handleTemplateUpdate = async (id: string, updates: Partial<NotificationTemplate>) => {
+    try {
+      const updatedTemplate = await api.notifications.updateTemplate(id, updates)
+      setTemplates((prev) => prev.map((template) => (template.id === id ? updatedTemplate : template)))
+      toast({
+        title: "Template updated",
+        description: `${updatedTemplate.name} email template saved successfully`,
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update email template",
+        variant: "destructive",
+      })
+      throw error
     }
   }
 
@@ -154,6 +176,8 @@ export function NotificationsPage() {
       </div>
 
       {stats && <NotificationStatsCards stats={stats} />}
+
+      <NotificationTemplatesManager templates={templates} onSaveTemplate={handleTemplateUpdate} />
 
       {/* Statistics by Type and Priority */}
       {stats && (
@@ -301,7 +325,13 @@ export function NotificationsPage() {
         )}
       </div>
 
-      <BroadcastDialog open={broadcastOpen} onOpenChange={setBroadcastOpen} users={users} onSuccess={loadData} />
+      <BroadcastDialog
+        open={broadcastOpen}
+        onOpenChange={setBroadcastOpen}
+        users={users}
+        onSuccess={loadData}
+        templates={templates}
+      />
     </div>
   )
 }

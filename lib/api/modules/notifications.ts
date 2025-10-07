@@ -1,6 +1,12 @@
-import type { Notification, NotificationFilters, NotificationStats, CreateNotificationDto } from '@/types/notification'
+import type {
+  Notification,
+  NotificationFilters,
+  NotificationStats,
+  CreateNotificationDto,
+  NotificationTemplate,
+} from '@/types/notification'
 import { delay } from '@/lib/api/utils'
-import { mockNotifications, mockUsers } from '@/lib/mock-data'
+import { mockNotifications, mockUsers, mockNotificationTemplates } from '@/lib/mock-data'
 
 export const notifications = {
   getAll: async (filters?: NotificationFilters): Promise<Notification[]> => {
@@ -60,58 +66,47 @@ export const notifications = {
   create: async (data: CreateNotificationDto): Promise<Notification | Notification[]> => {
     await delay()
 
+    const template = data.template_id ? mockNotificationTemplates.find((t) => t.id === data.template_id) : undefined
+
+    const resolveNotification = (userId: string): Notification => {
+      const notification: Notification = {
+        id: String(mockNotifications.length + Math.random()),
+        user_id: userId,
+        title: data.title || template?.subject || 'Notification',
+        body: data.body ?? template?.body,
+        type: data.type,
+        data: data.data || {},
+        is_read: false,
+        created_at: new Date().toISOString(),
+        expires_at: data.expires_at,
+        priority: data.priority || 'normal',
+        template_id: data.template_id,
+      }
+      mockNotifications.push(notification)
+      return notification
+    }
+
     if (data.user_ids && data.user_ids.length > 0) {
-      const notifications: Notification[] = data.user_ids.map((userId) => {
-        const notification: Notification = {
-          id: String(mockNotifications.length + Math.random()),
-          user_id: userId,
-          title: data.title,
-          body: data.body,
-          type: data.type,
-          data: data.data || {},
-          is_read: false,
-          created_at: new Date().toISOString(),
-          expires_at: data.expires_at,
-          priority: data.priority || 'normal',
-        }
-        mockNotifications.push(notification)
-        return notification
-      })
-      return notifications
+      return data.user_ids.map((userId) => resolveNotification(userId))
     }
 
     if (data.tenant) {
       const tenantUsers = mockUsers.filter((u) => u.tenant === data.tenant)
-      const notifications: Notification[] = tenantUsers.map((user) => {
-        const notification: Notification = {
-          id: String(mockNotifications.length + Math.random()),
-          user_id: user.id,
-          title: data.title,
-          body: data.body,
-          type: data.type,
-          data: data.data || {},
-          is_read: false,
-          created_at: new Date().toISOString(),
-          expires_at: data.expires_at,
-          priority: data.priority || 'normal',
-        }
-        mockNotifications.push(notification)
-        return notification
-      })
-      return notifications
+      return tenantUsers.map((user) => resolveNotification(user.id))
     }
 
     const notification: Notification = {
       id: String(mockNotifications.length + 1),
       user_id: data.user_id || '',
-      title: data.title,
-      body: data.body,
+      title: data.title || template?.subject || 'Notification',
+      body: data.body ?? template?.body,
       type: data.type,
       data: data.data || {},
       is_read: false,
       created_at: new Date().toISOString(),
       expires_at: data.expires_at,
       priority: data.priority || 'normal',
+      template_id: data.template_id,
     }
     mockNotifications.push(notification)
     return notification
@@ -140,5 +135,34 @@ export const notifications = {
     const expiredCount = mockNotifications.filter((n) => n.expires_at && n.expires_at < now).length
     mockNotifications.splice(0, mockNotifications.length, ...mockNotifications.filter((n) => !n.expires_at || n.expires_at >= now))
     return expiredCount
+  },
+
+  getTemplates: async (): Promise<NotificationTemplate[]> => {
+    await delay()
+    return mockNotificationTemplates.map((template) => ({ ...template }))
+  },
+
+  updateTemplate: async (id: string, updates: Partial<NotificationTemplate>): Promise<NotificationTemplate> => {
+    await delay()
+    const template = mockNotificationTemplates.find((t) => t.id === id)
+    if (!template) {
+      throw new Error('Template not found')
+    }
+
+    if (updates.subject !== undefined) {
+      template.subject = updates.subject
+    }
+    if (updates.body !== undefined) {
+      template.body = updates.body
+    }
+    if (updates.description !== undefined) {
+      template.description = updates.description
+    }
+    if (updates.placeholders) {
+      template.placeholders = updates.placeholders
+    }
+
+    template.updated_at = new Date().toISOString()
+    return { ...template }
   },
 }
