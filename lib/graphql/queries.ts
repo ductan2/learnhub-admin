@@ -492,3 +492,65 @@ export const DELETE_LESSON = gql`
     deleteLesson(id: $id)
   }
 `
+
+export const GET_LESSON_SECTIONS = gql`
+  query GetLessonSections(
+    $lessonId: ID!
+    $filter: LessonSectionFilterInput
+    $page: Int
+    $pageSize: Int
+    $orderBy: LessonSectionOrderInput
+  ) {
+    lessonSections(
+      lessonId: $lessonId
+      filter: $filter
+      page: $page
+      pageSize: $pageSize
+      orderBy: $orderBy
+    ) {
+      items {
+        id
+        lessonId
+        ord
+        type
+        body
+        createdAt
+      }
+      totalCount
+      page
+      pageSize
+    }
+  }
+`
+
+export const CREATE_LESSON_SECTION = gql`
+  mutation CreateLessonSection($lessonId: ID!, $input: CreateLessonSectionInput!) {
+    createLessonSection(lessonId: $lessonId, input: $input) {
+      id
+      lessonId
+      ord
+      type
+      body
+      createdAt
+    }
+  }
+`
+
+export const UPDATE_LESSON_SECTION = gql`
+  mutation UpdateLessonSection($id: ID!, $input: UpdateLessonSectionInput!) {
+    updateLessonSection(id: $id, input: $input) {
+      id
+      lessonId
+      ord
+      type
+      body
+      createdAt
+    }
+  }
+`
+
+export const DELETE_LESSON_SECTION = gql`
+  mutation DeleteLessonSection($id: ID!) {
+    deleteLessonSection(id: $id)
+  }
+`

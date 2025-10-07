@@ -2,6 +2,7 @@ import { users } from './modules/users'
 import { media } from './modules/media'
 import { topics, levels, tags } from './modules/content'
 import { lessons } from './modules/lessons'
+import { lessonSections } from './modules/lesson-sections'
 import { quizzes } from './modules/quizzes'
 import { questions } from './modules/questions'
 import { enrollments } from './modules/enrollments'
@@ -19,6 +20,7 @@ export const api = {
   levels,
   tags,
   lessons,
+  lessonSections,
   quizzes,
   questions,
   enrollments,

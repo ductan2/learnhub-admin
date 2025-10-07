@@ -13,12 +13,23 @@ interface LessonSectionsEditorProps {
   lessonId: string
   sections: LessonSection[]
   onSectionsChange: (sections: LessonSection[]) => void
+  isLoading?: boolean
+  disabled?: boolean
 }
 
-export function LessonSectionsEditor({ lessonId, sections, onSectionsChange }: LessonSectionsEditorProps) {
+export function LessonSectionsEditor({
+  lessonId,
+  sections,
+  onSectionsChange,
+  isLoading = false,
+  disabled = false,
+}: LessonSectionsEditorProps) {
   const [editingSection, setEditingSection] = useState<string | null>(null)
 
+  const isReadOnly = disabled || isLoading
+
   const addSection = (type: LessonSection["type"]) => {
+    if (isReadOnly) return
     const newSection: LessonSection = {
       id: `temp-${Date.now()}`,
       lesson_id: lessonId,
@@ -31,14 +42,17 @@ export function LessonSectionsEditor({ lessonId, sections, onSectionsChange }: L
   }
 
   const updateSection = (id: string, updates: Partial<LessonSection>) => {
+    if (isReadOnly) return
     onSectionsChange(sections.map((s) => (s.id === id ? { ...s, ...updates } : s)))
   }
 
   const deleteSection = (id: string) => {
+    if (isReadOnly) return
     onSectionsChange(sections.filter((s) => s.id !== id).map((s, index) => ({ ...s, order: index + 1 })))
   }
 
   const moveSection = (id: string, direction: "up" | "down") => {
+    if (isReadOnly) return
     const index = sections.findIndex((s) => s.id === id)
     if ((direction === "up" && index === 0) || (direction === "down" && index === sections.length - 1)) return
 
@@ -80,26 +94,30 @@ export function LessonSectionsEditor({ lessonId, sections, onSectionsChange }: L
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Lesson Sections</h3>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => addSection("text")}>
+          <Button variant="outline" size="sm" onClick={() => addSection("text")} disabled={isReadOnly}>
             <FileText className="h-4 w-4 mr-2" />
             Text
           </Button>
-          <Button variant="outline" size="sm" onClick={() => addSection("video")}>
+          <Button variant="outline" size="sm" onClick={() => addSection("video")} disabled={isReadOnly}>
             <Video className="h-4 w-4 mr-2" />
             Video
           </Button>
-          <Button variant="outline" size="sm" onClick={() => addSection("image")}>
+          <Button variant="outline" size="sm" onClick={() => addSection("image")} disabled={isReadOnly}>
             <ImageIcon className="h-4 w-4 mr-2" />
             Image
           </Button>
-          <Button variant="outline" size="sm" onClick={() => addSection("quiz")}>
+          <Button variant="outline" size="sm" onClick={() => addSection("quiz")} disabled={isReadOnly}>
             <HelpCircle className="h-4 w-4 mr-2" />
             Quiz
           </Button>
         </div>
       </div>
 
-      {sections.length === 0 ? (
+      {isLoading ? (
+        <Card className="p-12 text-center text-muted-foreground">
+          <p>Loading sections...</p>
+        </Card>
+      ) : sections.length === 0 ? (
         <Card className="p-12 text-center text-muted-foreground">
           <p>No sections yet. Add your first section to get started.</p>
         </Card>
@@ -118,7 +136,7 @@ export function LessonSectionsEditor({ lessonId, sections, onSectionsChange }: L
                       size="icon"
                       className="h-6 w-6 cursor-move"
                       onClick={() => moveSection(section.id, "up")}
-                      disabled={index === 0}
+                      disabled={index === 0 || isReadOnly}
                     >
                       <GripVertical className="h-4 w-4" />
                     </Button>
@@ -137,6 +155,7 @@ export function LessonSectionsEditor({ lessonId, sections, onSectionsChange }: L
                           variant="ghost"
                           size="sm"
                           onClick={() => setEditingSection(isEditing ? null : section.id)}
+                          disabled={isReadOnly}
                         >
                           {isEditing ? "Done" : "Edit"}
                         </Button>
@@ -145,6 +164,7 @@ export function LessonSectionsEditor({ lessonId, sections, onSectionsChange }: L
                           size="icon"
                           className="h-8 w-8"
                           onClick={() => deleteSection(section.id)}
+                          disabled={isReadOnly}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
@@ -159,6 +179,7 @@ export function LessonSectionsEditor({ lessonId, sections, onSectionsChange }: L
                             <Textarea
                               value={section.content || ""}
                               onChange={(e) => updateSection(section.id, { content: e.target.value })}
+                              disabled={isReadOnly}
                               placeholder="Enter text content..."
                               rows={6}
                             />
@@ -171,6 +192,7 @@ export function LessonSectionsEditor({ lessonId, sections, onSectionsChange }: L
                             <Textarea
                               value={section.content || ""}
                               onChange={(e) => updateSection(section.id, { content: e.target.value })}
+                              disabled={isReadOnly}
                               placeholder="Enter video URL or embed code..."
                               rows={3}
                             />
@@ -183,6 +205,7 @@ export function LessonSectionsEditor({ lessonId, sections, onSectionsChange }: L
                             <Select
                               value={section.media_id || ""}
                               onValueChange={(value) => updateSection(section.id, { media_id: value })}
+                              disabled={isReadOnly}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Select image from media library" />
@@ -201,6 +224,7 @@ export function LessonSectionsEditor({ lessonId, sections, onSectionsChange }: L
                             <Select
                               value={section.quiz_id || ""}
                               onValueChange={(value) => updateSection(section.id, { quiz_id: value })}
+                              disabled={isReadOnly}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Select quiz" />
