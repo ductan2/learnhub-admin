@@ -294,3 +294,195 @@ export const DELETE_MEDIA = gql`
     deleteMedia(id: $id)
   }
 `
+
+// Lesson queries and mutations
+export const GET_LESSON = gql`
+  query GetLesson($id: ID!) {
+    lesson(id: $id) {
+      id
+      code
+      title
+      description
+      isPublished
+      version
+      createdBy
+      createdAt
+      updatedAt
+      publishedAt
+      topic {
+        id
+        name
+      }
+      level {
+        id
+        name
+      }
+      tags {
+        id
+        name
+      }
+      sections {
+        id
+        ord
+        type
+        body
+        createdAt
+      }
+    }
+  }
+`
+
+export const GET_LESSONS = gql`
+  query GetLessons(
+    $filter: LessonFilterInput
+    $page: Int
+    $pageSize: Int
+    $orderBy: LessonOrderInput
+  ) {
+    lessons(filter: $filter, page: $page, pageSize: $pageSize, orderBy: $orderBy) {
+      items {
+        id
+        code
+        title
+        description
+        isPublished
+        version
+        createdBy
+        createdAt
+        updatedAt
+        publishedAt
+        topic {
+          id
+          name
+        }
+        level {
+          id
+          name
+        }
+        tags {
+          id
+          name
+        }
+      }
+      totalCount
+      page
+      pageSize
+    }
+  }
+`
+
+export const CREATE_LESSON = gql`
+  mutation CreateLesson($input: CreateLessonInput!) {
+    createLesson(input: $input) {
+      id
+      code
+      title
+      description
+      isPublished
+      version
+      createdBy
+      createdAt
+      updatedAt
+      publishedAt
+      topic {
+        id
+        name
+      }
+      level {
+        id
+        name
+      }
+      tags {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const UPDATE_LESSON = gql`
+  mutation UpdateLesson($id: ID!, $input: UpdateLessonInput!) {
+    updateLesson(id: $id, input: $input) {
+      id
+      code
+      title
+      description
+      isPublished
+      version
+      createdBy
+      createdAt
+      updatedAt
+      publishedAt
+      topic {
+        id
+        name
+      }
+      level {
+        id
+        name
+      }
+      tags {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const PUBLISH_LESSON = gql`
+  mutation PublishLesson($id: ID!) {
+    publishLesson(id: $id) {
+      id
+      code
+      title
+      description
+      isPublished
+      version
+      createdBy
+      createdAt
+      updatedAt
+      publishedAt
+      topic {
+        id
+        name
+      }
+      level {
+        id
+        name
+      }
+      tags {
+        id
+        name
+      }
+    }
+  }
+`
+
+export const UNPUBLISH_LESSON = gql`
+  mutation UnpublishLesson($id: ID!) {
+    unpublishLesson(id: $id) {
+      id
+      code
+      title
+      description
+      isPublished
+      version
+      createdBy
+      createdAt
+      updatedAt
+      publishedAt
+      topic {
+        id
+        name
+      }
+      level {
+        id
+        name
+      }
+      tags {
+        id
+        name
+      }
+    }
+  }
+`
