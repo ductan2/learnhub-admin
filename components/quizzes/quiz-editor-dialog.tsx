@@ -15,13 +15,14 @@ interface QuizEditorDialogProps {
   open: boolean
   onClose: () => void
   quiz: Quiz | null
-  onSave: (questions: QuizQuestion[]) => void
+  onSave: (quiz: Quiz, questions: QuizQuestion[]) => Promise<void>
 }
 
 export function QuizEditorDialog({ open, onClose, quiz, onSave }: QuizEditorDialogProps) {
   const [questions, setQuestions] = useState<QuizQuestion[]>([])
   const [activeTab, setActiveTab] = useState("edit")
   const [isLoading, setIsLoading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -80,9 +81,18 @@ export function QuizEditorDialog({ open, onClose, quiz, onSave }: QuizEditorDial
     }
   }, [open])
 
-  const handleSave = () => {
-    onSave(questions)
-    onClose()
+  const handleSave = async () => {
+    if (!quiz) return
+
+    setIsSaving(true)
+    try {
+      await onSave(quiz, questions)
+      onClose()
+    } catch (error) {
+      console.error("Failed to save quiz questions", error)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   if (!quiz) return null
@@ -102,9 +112,9 @@ export function QuizEditorDialog({ open, onClose, quiz, onSave }: QuizEditorDial
                 <Eye className="h-4 w-4 mr-2" />
                 {activeTab === "edit" ? "Preview" : "Edit"}
               </Button>
-              <Button onClick={handleSave}>
-                <Save className="h-4 w-4 mr-2" />
-                Save Questions
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                {isSaving ? "Saving..." : "Save Questions"}
               </Button>
             </div>
           </div>

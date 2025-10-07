@@ -5,7 +5,7 @@ import { QuizList } from "@/components/quizzes/quiz-list"
 import { QuizFormDialog } from "@/components/quizzes/quiz-form-dialog"
 import { QuizEditorDialog } from "@/components/quizzes/quiz-editor-dialog"
 import { api } from "@/lib/api/exports"
-import type { Quiz, CreateQuizDto, QuizQuestion } from "@/types/quiz"
+import type { Quiz, CreateQuizDto, QuizQuestion, CreateQuestionDto } from "@/types/quiz"
 import type { Topic, Level } from "@/types/common"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -168,11 +168,93 @@ export function QuizzesPage() {
     }
   }
 
-  const handleSaveQuestions = (questions: QuizQuestion[]) => {
-    toast({
-      title: "Success",
-      description: "Quiz questions saved successfully",
-    })
+  const handleSaveQuestions = async (quiz: Quiz, questions: QuizQuestion[]) => {
+    const quizId = quiz.id
+    const newQuestions = questions.filter((question) => question.id.startsWith("temp-"))
+
+    if (newQuestions.length === 0) {
+      toast({
+        title: "Success",
+        description: "Quiz questions saved successfully",
+      })
+      return
+    }
+
+    const buildCreateQuestionDto = (question: QuizQuestion): CreateQuestionDto => {
+      const metadata: Record<string, unknown> = {
+        ...(question.metadata ?? {}),
+      }
+
+      if (question.explanation) {
+        metadata.explanation = question.explanation
+      }
+
+      if (question.type === "short_answer" && question.correct_answer) {
+        metadata.correctAnswer = question.correct_answer
+      }
+
+      const dto: CreateQuestionDto = {
+        quiz_id: quizId,
+        type: question.type,
+        question_text: question.question_text.trim(),
+        points: question.points ?? 0,
+        prompt_media_id: question.prompt_media_id,
+      }
+
+      if (Object.keys(metadata).length > 0) {
+        dto.metadata = metadata
+      }
+
+      if (question.type === "multiple_choice") {
+        const options = (question.answers ?? [])
+          .filter((answer) => answer.answer_text.trim().length > 0)
+          .map((answer) => ({
+            option_text: answer.answer_text.trim(),
+            is_correct: answer.is_correct,
+          }))
+
+        if (options.length === 0) {
+          throw new Error("Multiple choice questions must have at least one answer option")
+        }
+
+        dto.options = options
+      } else if (question.type === "true_false") {
+        const correctAnswer = (question.correct_answer ?? "").toLowerCase()
+        dto.options = [
+          { option_text: "True", is_correct: correctAnswer === "true" },
+          { option_text: "False", is_correct: correctAnswer === "false" },
+        ]
+      }
+
+      return dto
+    }
+
+    const invalidQuestion = newQuestions.find((question) => question.question_text.trim().length === 0)
+    if (invalidQuestion) {
+      toast({
+        title: "Error",
+        description: "Question text is required for all questions",
+        variant: "destructive",
+      })
+      throw new Error("Question text is required")
+    }
+
+    try {
+      await Promise.all(newQuestions.map((question) => api.questions.create(buildCreateQuestionDto(question))))
+      toast({
+        title: "Success",
+        description: "Quiz questions saved successfully",
+      })
+      await loadData()
+    } catch (error) {
+      console.error("Failed to save quiz questions", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save quiz questions",
+        variant: "destructive",
+      })
+      throw error
+    }
   }
 
   return (
