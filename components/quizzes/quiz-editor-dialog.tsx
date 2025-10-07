@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { QuestionEditor } from "./question-editor"
 import type { Quiz, QuizQuestion } from "@/types/quiz"
-import { Eye, Save, Check } from "lucide-react"
+import { Eye, Save, Check, Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
+import { api } from "@/lib/api/exports"
+import { useToast } from "@/hooks/use-toast"
 
 interface QuizEditorDialogProps {
   open: boolean
@@ -19,13 +21,64 @@ interface QuizEditorDialogProps {
 export function QuizEditorDialog({ open, onClose, quiz, onSave }: QuizEditorDialogProps) {
   const [questions, setQuestions] = useState<QuizQuestion[]>([])
   const [activeTab, setActiveTab] = useState("edit")
+  const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
-    if (quiz) {
-      // In real app, would load questions from API
-      setQuestions([])
+    let isMounted = true
+
+    const loadQuestions = async () => {
+      if (!quiz || !open) {
+        if (isMounted) {
+          setQuestions([])
+          setIsLoading(false)
+        }
+        return
+      }
+
+      setIsLoading(true)
+
+      try {
+        if (quiz.questions && quiz.questions.length > 0) {
+          if (isMounted) {
+            setQuestions(quiz.questions)
+          }
+          return
+        }
+
+        const detailedQuiz = await api.quizzes.getById(quiz.id)
+        if (!isMounted) return
+
+        setQuestions(detailedQuiz.questions ?? [])
+      } catch (error) {
+        console.error("Failed to load quiz questions", error)
+        if (isMounted) {
+          setQuestions([])
+          toast({
+            title: "Error",
+            description: "Failed to load quiz questions",
+            variant: "destructive",
+          })
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
+      }
     }
-  }, [quiz])
+
+    loadQuestions()
+
+    return () => {
+      isMounted = false
+    }
+  }, [quiz, open, toast])
+
+  useEffect(() => {
+    if (open) {
+      setActiveTab("edit")
+    }
+  }, [open])
 
   const handleSave = () => {
     onSave(questions)
@@ -35,7 +88,11 @@ export function QuizEditorDialog({ open, onClose, quiz, onSave }: QuizEditorDial
   if (!quiz) return null
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(value) => {
+      if (!value) {
+        onClose()
+      }
+    }}>
       <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
         <DialogHeader>
           <div className="flex items-center justify-between">
@@ -60,7 +117,14 @@ export function QuizEditorDialog({ open, onClose, quiz, onSave }: QuizEditorDial
           </TabsList>
 
           <TabsContent value="edit" className="flex-1 overflow-y-auto mt-4">
-            <QuestionEditor quizId={quiz.id} questions={questions} onQuestionsChange={setQuestions} />
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin mb-2" />
+                <p>Loading questions...</p>
+              </div>
+            ) : (
+              <QuestionEditor quizId={quiz.id} questions={questions} onQuestionsChange={setQuestions} />
+            )}
           </TabsContent>
 
           <TabsContent value="preview" className="flex-1 overflow-y-auto mt-4">
@@ -69,13 +133,20 @@ export function QuizEditorDialog({ open, onClose, quiz, onSave }: QuizEditorDial
                 <h1 className="text-3xl font-bold mb-2">{quiz.title}</h1>
                 {quiz.description && <p className="text-muted-foreground">{quiz.description}</p>}
                 <div className="flex gap-4 mt-4 text-sm text-muted-foreground">
-                  <span>{questions.length} questions</span>
+                  <span>
+                    {isLoading ? "Loading questions..." : `${questions.length} questions`}
+                  </span>
                   {quiz.time_limit && <span>{quiz.time_limit} minutes</span>}
                   {quiz.passing_score && <span>Pass: {quiz.passing_score}%</span>}
                 </div>
               </div>
 
-              {questions.length === 0 ? (
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <Loader2 className="h-5 w-5 animate-spin mb-2" />
+                  <p>Loading questions...</p>
+                </div>
+              ) : questions.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <p>No questions to preview yet</p>
                 </div>

@@ -45,17 +45,47 @@ const mapOption = (option: GraphqlQuestionOption): QuizAnswer => ({
   feedback: option.feedback ?? undefined,
 })
 
-const mapQuestion = (question: GraphqlQuizQuestion): QuizQuestion => ({
-  id: question.id,
-  quiz_id: question.quizId,
-  type: normalizeQuestionType(question.type),
-  question_text: question.prompt,
-  points: question.points ?? 0,
-  order: question.ord ?? 0,
-  prompt_media_id: question.promptMedia ?? undefined,
-  metadata: question.metadata ?? undefined,
-  answers: (question.options ?? []).map(mapOption),
-})
+const mapQuestion = (question: GraphqlQuizQuestion): QuizQuestion => {
+  const type = normalizeQuestionType(question.type)
+  const answers = (question.options ?? []).map(mapOption)
+
+  let correctAnswer: QuizQuestion['correct_answer']
+
+  if (type === 'true_false') {
+    const correctOption = answers.find((option) => option.is_correct)
+    if (correctOption) {
+      const normalized = correctOption.answer_text.trim().toLowerCase()
+      if (normalized === 'true' || normalized === 'false') {
+        correctAnswer = normalized
+      } else {
+        correctAnswer = correctOption.answer_text
+      }
+    }
+  } else if (type === 'short_answer') {
+    const metadata = question.metadata as Record<string, unknown> | undefined
+    const possibleAnswer =
+      (metadata?.correctAnswer as string | undefined) ??
+      (metadata?.correct_answer as string | undefined) ??
+      (metadata?.answer as string | undefined)
+
+    if (possibleAnswer) {
+      correctAnswer = possibleAnswer
+    }
+  }
+
+  return {
+    id: question.id,
+    quiz_id: question.quizId,
+    type,
+    question_text: question.prompt,
+    points: question.points ?? 0,
+    order: question.ord ?? 0,
+    prompt_media_id: question.promptMedia ?? undefined,
+    metadata: question.metadata ?? undefined,
+    answers,
+    correct_answer: correctAnswer,
+  }
+}
 
 const mapQuiz = (quiz: GraphqlQuiz): Quiz => ({
   id: quiz.id,
