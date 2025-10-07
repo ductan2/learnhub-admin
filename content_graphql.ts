@@ -596,3 +596,76 @@ export const DELETE_MEDIA = gql`
   }
 `;
 
+// Quizzes
+export const CREATE_QUIZ = gql`
+  mutation CreateQuiz($input: CreateQuizInput!) {
+    createQuiz(input: $input) {
+      id
+      lessonId
+      title
+      description
+      totalPoints
+      timeLimitS
+      createdAt
+      tags {
+        id
+        name
+      }
+    }
+  }
+`;
+
+export const ADD_QUIZ_QUESTION = gql`
+  mutation AddQuizQuestion($quizId: ID!, $input: CreateQuizQuestionInput!) {
+    addQuizQuestion(quizId: $quizId, input: $input) {
+      id
+      quizId
+      ord
+      type
+      prompt
+      promptMedia
+      points
+      metadata
+      options {
+        id
+        ord
+        label
+        isCorrect
+        feedback
+      }
+    }
+  }
+`;
+
+export const ADD_QUESTION_OPTION = gql`
+  mutation AddQuestionOption($questionId: ID!, $input: CreateQuestionOptionInput!) {
+    addQuestionOption(questionId: $questionId, input: $input) {
+      id
+      questionId
+      ord
+      label
+      isCorrect
+      feedback
+    }
+  }
+`;
+
+export const UPDATE_QUESTION_OPTION = gql`
+  mutation UpdateQuestionOption($id: ID!, $input: UpdateQuestionOptionInput!) {
+    updateQuestionOption(id: $id, input: $input) {
+      id
+      questionId
+      ord
+      label
+      isCorrect
+      feedback
+    }
+  }
+`;
+
+export const DELETE_QUESTION_OPTION = gql`
+  mutation DeleteQuestionOption($id: ID!) {
+    deleteQuestionOption(id: $id)
+  }
+`;
+
