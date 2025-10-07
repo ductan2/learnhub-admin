@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { UserList } from "@/components/users/user-list"
-import { UserDetailDialog } from "@/components/users/user-detail-dialog"
 import { api } from "@/lib/api/exports"
 import type { User } from "@/types/user"
 import { useToast } from "@/hooks/use-toast"
@@ -13,9 +13,7 @@ export function UsersPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [verifiedFilter, setVerifiedFilter] = useState("all")
-  const [selectedUser, setSelectedUser] = useState<User | null>(null)
-  const [detailDialogOpen, setDetailDialogOpen] = useState(false)
-
+  const router = useRouter()
   const { toast } = useToast()
 
   useEffect(() => {
@@ -65,8 +63,7 @@ export function UsersPage() {
   }
 
   const handleViewUser = (user: User) => {
-    setSelectedUser(user)
-    setDetailDialogOpen(true)
+    router.push(`/users/${user.id}`)
   }
 
   const handleUpdateStatus = async (userId: string, status: User["status"]) => {
@@ -99,8 +96,6 @@ export function UsersPage() {
         verifiedFilter={verifiedFilter}
         onVerifiedFilterChange={setVerifiedFilter}
       />
-
-      <UserDetailDialog open={detailDialogOpen} onClose={() => setDetailDialogOpen(false)} user={selectedUser} />
     </div>
   )
 }
