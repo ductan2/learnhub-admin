@@ -2,6 +2,7 @@ import type { Lesson, LessonFilters, CreateLessonDto, UpdateLessonDto } from '@/
 import { apolloClient } from '@/lib/graphql/client'
 import {
   CREATE_LESSON,
+  DELETE_LESSON,
   GET_LESSON,
   GET_LESSONS,
   PUBLISH_LESSON,
@@ -12,6 +13,8 @@ import {
   CreateLessonInput,
   CreateLessonResponse,
   CreateLessonVariables,
+  DeleteLessonResponse,
+  DeleteLessonVariables,
   GetLessonVariables,
   GetLessonsVariables,
   Lesson as GraphqlLesson,
@@ -268,7 +271,19 @@ export const lessons = {
     }
   },
 
-  delete: async () => {
-    throw new Error('Lesson deletion is not supported via GraphQL API yet')
+  delete: async (id: string): Promise<void> => {
+    try {
+      const { data } = await apolloClient.mutate<DeleteLessonResponse, DeleteLessonVariables>({
+        mutation: DELETE_LESSON,
+        variables: { id },
+      })
+
+      if (!data?.deleteLesson) {
+        throw new Error('Failed to delete lesson')
+      }
+    } catch (error) {
+      console.error('Failed to delete lesson via GraphQL:', error)
+      throw new Error('Failed to delete lesson')
+    }
   },
 }

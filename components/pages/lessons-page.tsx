@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { LessonList } from "@/components/lessons/lesson-list"
 import { LessonFormDialog } from "@/components/lessons/lesson-form-dialog"
 import { LessonEditorDialog } from "@/components/lessons/lesson-editor-dialog"
 import { api } from "@/lib/api/exports"
-import type { Lesson, CreateLessonDto, LessonSection } from "@/types/lesson"
+import type { Lesson, CreateLessonDto, LessonSection, LessonFilters } from "@/types/lesson"
 import type { Topic, Level } from "@/types/common"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -21,13 +21,14 @@ import {
 
 export function LessonsPage() {
   const [lessons, setLessons] = useState<Lesson[]>([])
-  const [filteredLessons, setFilteredLessons] = useState<Lesson[]>([])
   const [topics, setTopics] = useState<Topic[]>([])
   const [levels, setLevels] = useState<Level[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [topicFilter, setTopicFilter] = useState("all")
   const [levelFilter, setLevelFilter] = useState("all")
   const [publishedFilter, setPublishedFilter] = useState("all")
+  const [isLoadingLessons, setIsLoadingLessons] = useState(false)
+  const isMountedRef = useRef(false)
   const [formDialog, setFormDialog] = useState<{ open: boolean; lesson: Lesson | null }>({
     open: false,
     lesson: null,
@@ -43,60 +44,101 @@ export function LessonsPage() {
 
   const { toast } = useToast()
 
-  useEffect(() => {
-    loadData()
-  }, [])
+  const buildLessonFilters = useCallback((): LessonFilters | undefined => {
+    const filters: LessonFilters = {}
 
-  useEffect(() => {
-    filterLessons()
-  }, [lessons, searchQuery, topicFilter, levelFilter, publishedFilter])
-
-  const loadData = async () => {
-    try {
-      const [lessonsData, topicsData, levelsData] = await Promise.all([
-        api.lessons.getAll(),
-        api.topics.getAll(),
-        api.levels.getAll(),
-      ])
-      setLessons(lessonsData)
-      setTopics(topicsData)
-      setLevels(levelsData)
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load lessons",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const filterLessons = () => {
-    let filtered = [...lessons]
-
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (l) =>
-          l.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          l.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
+    const trimmedSearch = searchQuery.trim()
+    if (trimmedSearch) {
+      filters.search = trimmedSearch
     }
 
     if (topicFilter !== "all") {
-      filtered = filtered.filter((l) => l.topic_id === topicFilter)
+      filters.topic_id = topicFilter
     }
 
     if (levelFilter !== "all") {
-      filtered = filtered.filter((l) => l.level_id === levelFilter)
+      filters.level_id = levelFilter
     }
 
     if (publishedFilter === "published") {
-      filtered = filtered.filter((l) => l.is_published)
+      filters.is_published = true
     } else if (publishedFilter === "draft") {
-      filtered = filtered.filter((l) => !l.is_published)
+      filters.is_published = false
     }
 
-    setFilteredLessons(filtered)
-  }
+    if (Object.keys(filters).length === 0) {
+      return undefined
+    }
+
+    return filters
+  }, [levelFilter, publishedFilter, searchQuery, topicFilter])
+
+  const loadLessons = useCallback(async () => {
+    if (isMountedRef.current) {
+      setIsLoadingLessons(true)
+    }
+
+    try {
+      const filters = buildLessonFilters()
+      const lessonsData = await api.lessons.getAll(filters)
+
+      if (isMountedRef.current) {
+        setLessons(lessonsData)
+      }
+    } catch (error) {
+      if (isMountedRef.current) {
+        console.error("Failed to load lessons", error)
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to load lessons",
+          variant: "destructive",
+        })
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setIsLoadingLessons(false)
+      }
+    }
+  }, [buildLessonFilters, toast])
+
+  const loadMetadata = useCallback(async () => {
+    try {
+      const [topicsData, levelsData] = await Promise.all([
+        api.topics.getAll(),
+        api.levels.getAll(),
+      ])
+
+      if (isMountedRef.current) {
+        setTopics(topicsData)
+        setLevels(levelsData)
+      }
+    } catch (error) {
+      if (isMountedRef.current) {
+        console.error("Failed to load lesson metadata", error)
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to load lesson metadata",
+          variant: "destructive",
+        })
+      }
+    }
+  }, [toast])
+
+  useEffect(() => {
+    isMountedRef.current = true
+
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    loadMetadata()
+  }, [loadMetadata])
+
+  useEffect(() => {
+    loadLessons()
+  }, [loadLessons])
 
   const handleCreateLesson = async (data: CreateLessonDto) => {
     try {
@@ -106,11 +148,11 @@ export function LessonsPage() {
         description: "Lesson created successfully",
       })
       setFormDialog({ open: false, lesson: null })
-      loadData()
+      await loadLessons()
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to create lesson",
+        description: error instanceof Error ? error.message : "Failed to create lesson",
         variant: "destructive",
       })
     }
@@ -126,11 +168,11 @@ export function LessonsPage() {
         description: "Lesson updated successfully",
       })
       setFormDialog({ open: false, lesson: null })
-      loadData()
+      await loadLessons()
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update lesson",
+        description: error instanceof Error ? error.message : "Failed to update lesson",
         variant: "destructive",
       })
     }
@@ -146,11 +188,11 @@ export function LessonsPage() {
         description: "Lesson deleted successfully",
       })
       setDeleteDialog({ open: false, lessonId: null })
-      loadData()
+      await loadLessons()
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to delete lesson",
+        description: error instanceof Error ? error.message : "Failed to delete lesson",
         variant: "destructive",
       })
     }
@@ -163,11 +205,11 @@ export function LessonsPage() {
         title: "Success",
         description: published ? "Lesson published successfully" : "Lesson unpublished successfully",
       })
-      loadData()
+      await loadLessons()
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update lesson status",
+        description: error instanceof Error ? error.message : "Failed to update lesson status",
         variant: "destructive",
       })
     }
@@ -183,7 +225,7 @@ export function LessonsPage() {
   return (
     <div className="p-6">
       <LessonList
-        lessons={filteredLessons}
+        lessons={lessons}
         topics={topics}
         levels={levels}
         onCreateLesson={() => setFormDialog({ open: true, lesson: null })}
@@ -199,6 +241,7 @@ export function LessonsPage() {
         onLevelFilterChange={setLevelFilter}
         publishedFilter={publishedFilter}
         onPublishedFilterChange={setPublishedFilter}
+        isLoading={isLoadingLessons}
       />
 
       <LessonFormDialog

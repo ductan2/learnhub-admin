@@ -486,3 +486,9 @@ export const UNPUBLISH_LESSON = gql`
     }
   }
 `
+
+export const DELETE_LESSON = gql`
+  mutation DeleteLesson($id: ID!) {
+    deleteLesson(id: $id)
+  }
+`
