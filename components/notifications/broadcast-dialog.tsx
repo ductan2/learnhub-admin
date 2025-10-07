@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,9 +10,11 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
 import { api } from "@/lib/api/exports"
 import { useToast } from "@/hooks/use-toast"
-import type { CreateNotificationDto } from "@/types/notification"
+import type { CreateNotificationDto, NotificationTemplate } from "@/types/notification"
 import type { User } from "@/types/user"
 
 interface BroadcastDialogProps {
@@ -20,14 +22,17 @@ interface BroadcastDialogProps {
   onOpenChange: (open: boolean) => void
   users: User[]
   onSuccess: () => void
+  templates: NotificationTemplate[]
 }
 
-export function BroadcastDialog({ open, onOpenChange, users, onSuccess }: BroadcastDialogProps) {
+export function BroadcastDialog({ open, onOpenChange, users, onSuccess, templates }: BroadcastDialogProps) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [broadcastType, setBroadcastType] = useState<"all" | "tenant" | "users">("all")
   const [selectedTenant, setSelectedTenant] = useState("")
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
+  const [sendEmail, setSendEmail] = useState(false)
+  const [selectedTemplateId, setSelectedTemplateId] = useState("")
   const [formData, setFormData] = useState<Partial<CreateNotificationDto>>({
     title: "",
     body: "",
@@ -35,10 +40,74 @@ export function BroadcastDialog({ open, onOpenChange, users, onSuccess }: Broadc
     priority: "normal",
   })
 
+  const lastSyncedTemplate = useRef<NotificationTemplate | null>(null)
+
   const tenants = Array.from(new Set(users.map((u) => u.tenant)))
+  const canSendEmail = templates.length > 0
+
+  const selectedTemplate = useMemo(
+    () => templates.find((template) => template.id === selectedTemplateId),
+    [selectedTemplateId, templates],
+  )
+
+  useEffect(() => {
+    if (!canSendEmail && sendEmail) {
+      setSendEmail(false)
+    }
+  }, [canSendEmail, sendEmail])
+
+  useEffect(() => {
+    if (sendEmail && templates.length > 0 && !selectedTemplateId) {
+      setSelectedTemplateId(templates[0].id)
+    }
+  }, [sendEmail, templates, selectedTemplateId])
+
+  useEffect(() => {
+    if (!selectedTemplateId) {
+      lastSyncedTemplate.current = null
+      return
+    }
+
+    const template = templates.find((t) => t.id === selectedTemplateId)
+    if (!template) {
+      lastSyncedTemplate.current = null
+      return
+    }
+
+    if (!lastSyncedTemplate.current || lastSyncedTemplate.current.updated_at !== template.updated_at) {
+      setFormData((prev) => ({
+        ...prev,
+        title: template.subject,
+        body: template.body,
+      }))
+      lastSyncedTemplate.current = template
+    }
+  }, [selectedTemplateId, templates])
+
+  useEffect(() => {
+    if (!open) {
+      setSendEmail(false)
+      setSelectedTemplateId("")
+      lastSyncedTemplate.current = null
+      setBroadcastType("all")
+      setSelectedTenant("")
+      setSelectedUserIds([])
+      setFormData({ title: "", body: "", type: "announcement", priority: "normal" })
+    }
+  }, [open])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (sendEmail && !selectedTemplateId) {
+      toast({
+        title: "Template required",
+        description: "Please select an email template before sending.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -46,6 +115,9 @@ export function BroadcastDialog({ open, onOpenChange, users, onSuccess }: Broadc
         ...formData,
         title: formData.title!,
         type: formData.type!,
+        priority: formData.priority || "normal",
+        template_id: sendEmail ? selectedTemplateId || undefined : undefined,
+        send_email: sendEmail,
       }
 
       if (broadcastType === "all") {
@@ -60,13 +132,21 @@ export function BroadcastDialog({ open, onOpenChange, users, onSuccess }: Broadc
 
       toast({
         title: "Broadcast sent",
-        description: `Notification sent to ${broadcastType === "all" ? "all users" : broadcastType === "tenant" ? `tenant: ${selectedTenant}` : `${selectedUserIds.length} users`}`,
+        description: `Notification sent to ${
+          broadcastType === "all"
+            ? "all users"
+            : broadcastType === "tenant"
+              ? `tenant: ${selectedTenant}`
+              : `${selectedUserIds.length} users`
+        }${sendEmail && selectedTemplate ? ` using ${selectedTemplate.name} template` : ""}`,
       })
 
       onSuccess()
       onOpenChange(false)
       setFormData({ title: "", body: "", type: "announcement", priority: "normal" })
       setSelectedUserIds([])
+      setSendEmail(false)
+      setSelectedTemplateId("")
     } catch (error) {
       toast({
         title: "Error",
@@ -154,6 +234,78 @@ export function BroadcastDialog({ open, onOpenChange, users, onSuccess }: Broadc
               </div>
             </div>
           )}
+
+          <div className="rounded-lg border p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-base">Send Email</Label>
+                <p className="text-sm text-muted-foreground">
+                  {canSendEmail
+                    ? "Deliver this notification with an email template."
+                    : "Add email templates to enable email delivery."}
+                </p>
+              </div>
+              <Switch checked={sendEmail && canSendEmail} onCheckedChange={setSendEmail} disabled={!canSendEmail} />
+            </div>
+
+            {sendEmail && canSendEmail && (
+              <div className="space-y-2">
+                <div className="space-y-2">
+                  <Label htmlFor="template">Email Template</Label>
+                  <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                    <SelectTrigger id="template">
+                      <SelectValue placeholder="Choose template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.map((template) => (
+                        <SelectItem key={template.id} value={template.id}>
+                          {template.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {selectedTemplate && (
+                  <div className="space-y-3 text-sm">
+                    <p className="text-muted-foreground">
+                      Last updated {new Date(selectedTemplate.updated_at).toLocaleString()}
+                    </p>
+                    {selectedTemplate.placeholders && selectedTemplate.placeholders.length > 0 && (
+                      <div>
+                        <p className="font-medium">Available placeholders</p>
+                        <div className="mt-1 flex flex-wrap gap-2">
+                          {selectedTemplate.placeholders.map((placeholder) => (
+                            <Badge key={placeholder} variant="secondary">
+                              {`{{${placeholder}}}`}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (!selectedTemplate) {
+                          return
+                        }
+                        setFormData((prev) => ({
+                          ...prev,
+                          title: selectedTemplate.subject,
+                          body: selectedTemplate.body,
+                        }))
+                        lastSyncedTemplate.current = selectedTemplate
+                      }}
+                    >
+                      Reset to template content
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="title">Title *</Label>
