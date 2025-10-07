@@ -603,6 +603,10 @@ export interface UpdateLessonVariables {
   input: UpdateLessonInput;
 }
 
+export interface DeleteLessonVariables {
+  id: string;
+}
+
 export interface PublishLessonVariables {
   id: string;
 }
@@ -798,6 +802,10 @@ export interface CreateLessonResponse {
 
 export interface UpdateLessonResponse {
   updateLesson: Lesson;
+}
+
+export interface DeleteLessonResponse {
+  deleteLesson: boolean;
 }
 
 export interface PublishLessonResponse {

@@ -1,5 +1,5 @@
 "use client"
-import { BookOpen, Plus, Search, Eye, Edit, Trash2, Globe, GlobeLock } from "lucide-react"
+import { BookOpen, Plus, Search, Eye, Edit, Trash2, Globe, GlobeLock, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -32,6 +32,7 @@ interface LessonListProps {
   onLevelFilterChange: (levelId: string) => void
   publishedFilter: string
   onPublishedFilterChange: (filter: string) => void
+  isLoading?: boolean
 }
 
 export function LessonList({
@@ -51,6 +52,7 @@ export function LessonList({
   onLevelFilterChange,
   publishedFilter,
   onPublishedFilterChange,
+  isLoading = false,
 }: LessonListProps) {
   const getTopicName = (topicId: string) => topics.find((t) => t.id === topicId)?.name || "Unknown"
   const getLevelName = (levelId: string) => levels.find((l) => l.id === levelId)?.name || "Unknown"
@@ -126,7 +128,12 @@ export function LessonList({
         </div>
 
         <div className="divide-y divide-border">
-          {lessons.length === 0 ? (
+          {isLoading ? (
+            <div className="p-12 text-center text-muted-foreground flex flex-col items-center gap-3">
+              <Loader2 className="h-8 w-8 animate-spin" />
+              <p>Loading lessons...</p>
+            </div>
+          ) : lessons.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground">
               <BookOpen className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No lessons found</p>
