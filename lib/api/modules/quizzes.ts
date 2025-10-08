@@ -151,12 +151,23 @@ const buildCreateQuizInput = (data: CreateQuizDto): CreateQuizVariables['input']
   timeLimitS: data.time_limit ? data.time_limit * 60 : undefined,
 })
 
+type GetAllQuizzesParams = {
+  search?: string
+}
+
 export const quizzes = {
-  getAll: async (): Promise<Quiz[]> => {
+  getAll: async (params: GetAllQuizzesParams = {}): Promise<Quiz[]> => {
     try {
+      const search = params.search?.trim()
+      const variables: GetQuizzesVariables = { page: 1, pageSize: 50 }
+
+      if (search) {
+        variables.search = search
+      }
+
       const { data } = await apolloClient.query<QuizzesResponse, GetQuizzesVariables>({
         query: GET_QUIZZES,
-        variables: { page: 1, pageSize: 50 },
+        variables,
         fetchPolicy: 'network-only',
       })
 
