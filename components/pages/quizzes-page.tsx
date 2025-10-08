@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { QuizList } from "@/components/quizzes/quiz-list"
 import { QuizFormDialog } from "@/components/quizzes/quiz-form-dialog"
 import { QuizEditorDialog } from "@/components/quizzes/quiz-editor-dialog"
@@ -42,43 +42,41 @@ export function QuizzesPage() {
 
   const { toast } = useToast()
 
-  useEffect(() => {
-    loadData()
-  }, [])
+  const loadQuizzes = useCallback(
+    async (search?: string) => {
+      try {
+        const quizzesData = await api.quizzes.getAll({ search })
+        setQuizzes(quizzesData)
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load quizzes",
+          variant: "destructive",
+        })
+      }
+    },
+    [toast],
+  )
 
-  useEffect(() => {
-    filterQuizzes()
-  }, [quizzes, searchQuery, topicFilter, levelFilter])
-
-  const loadData = async () => {
+  const loadMetadata = useCallback(async () => {
     try {
-      const [quizzesData, topicsData, levelsData] = await Promise.all([
-        api.quizzes.getAll(),
+      const [topicsData, levelsData] = await Promise.all([
         api.topics.getAll(),
         api.levels.getAll(),
       ])
-      setQuizzes(quizzesData)
       setTopics(topicsData)
       setLevels(levelsData)
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to load quizzes",
+        description: "Failed to load quiz filters",
         variant: "destructive",
       })
     }
-  }
+  }, [toast])
 
-  const filterQuizzes = () => {
+  const filterQuizzes = useCallback(() => {
     let filtered = [...quizzes]
-
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (q) =>
-          q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          q.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    }
 
     if (topicFilter !== "all") {
       filtered = filtered.filter((q) => q.topic_id === topicFilter)
@@ -89,7 +87,19 @@ export function QuizzesPage() {
     }
 
     setFilteredQuizzes(filtered)
-  }
+  }, [quizzes, topicFilter, levelFilter])
+
+  useEffect(() => {
+    loadMetadata()
+  }, [loadMetadata])
+
+  useEffect(() => {
+    loadQuizzes(searchQuery)
+  }, [loadQuizzes, searchQuery])
+
+  useEffect(() => {
+    filterQuizzes()
+  }, [filterQuizzes])
 
   const handleCreateQuiz = async (data: CreateQuizDto) => {
     try {
@@ -99,7 +109,7 @@ export function QuizzesPage() {
         description: "Quiz created successfully",
       })
       setFormDialog({ open: false, quiz: null })
-      loadData()
+      await loadQuizzes(searchQuery)
       // Open editor for new quiz
       setEditorDialog({ open: true, quiz: newQuiz })
     } catch (error) {
@@ -121,7 +131,7 @@ export function QuizzesPage() {
         description: "Quiz updated successfully",
       })
       setFormDialog({ open: false, quiz: null })
-      loadData()
+      await loadQuizzes(searchQuery)
     } catch (error) {
       toast({
         title: "Error",
@@ -141,7 +151,7 @@ export function QuizzesPage() {
         description: "Quiz deleted successfully",
       })
       setDeleteDialog({ open: false, quizId: null })
-      loadData()
+      await loadQuizzes(searchQuery)
     } catch (error) {
       toast({
         title: "Error",
@@ -158,7 +168,7 @@ export function QuizzesPage() {
         title: "Success",
         description: "Quiz duplicated successfully",
       })
-      loadData()
+      await loadQuizzes(searchQuery)
     } catch (error) {
       toast({
         title: "Error",
