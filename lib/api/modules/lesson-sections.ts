@@ -97,28 +97,21 @@ const mapLessonSection = (section: GraphqlLessonSection): LessonSection => ({
   ...mapSectionBodyToUi(section),
 })
 
-const buildCreateInput = (section: LessonSection): CreateLessonSectionInput & { ord?: number } => {
+const buildCreateInput = (section: LessonSection): CreateLessonSectionInput => {
   const input: CreateLessonSectionInput & { ord?: number } = {
     type: UI_TO_GRAPHQL_SECTION_TYPE[section.type] ?? LessonSectionType.TEXT,
     body: mapSectionBodyToGraphql(section),
   }
 
-  if (typeof section.order === 'number') {
-    input.ord = section.order
-  }
-
   return input
 }
 
-const buildUpdateInput = (section: LessonSection): UpdateLessonSectionInput & { ord?: number } => {
-  const input: UpdateLessonSectionInput & { ord?: number } = {
+const buildUpdateInput = (section: LessonSection): UpdateLessonSectionInput => {
+  const input: UpdateLessonSectionInput = {
     type: UI_TO_GRAPHQL_SECTION_TYPE[section.type] ?? LessonSectionType.TEXT,
     body: mapSectionBodyToGraphql(section),
   }
 
-  if (typeof section.order === 'number') {
-    input.ord = section.order
-  }
 
   return input
 }

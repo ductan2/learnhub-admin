@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import type { User } from "@/types/user"
+import type { User, UserRole } from "@/types/user"
 import type { Enrollment, QuizAttempt } from "@/types/common"
 import { api } from "@/lib/api/exports"
 import { useToast } from "@/hooks/use-toast"
@@ -69,11 +69,11 @@ export function UserDetail({ userId }: UserDetailProps) {
     loadUserDetails()
   }, [userId, toast])
 
-  const handleRoleChange = async (newRole: User["role"]) => {
+  const handleRoleChange = async (newRole: UserRole) => {
     if (!user) return
     setIsUpdating(true)
     try {
-      const updatedUser = await api.users.updateRole(user.id, newRole)
+      const updatedUser = await api.users.updateRole(user.id, newRole.id)
       setUser(updatedUser)
       toast({
         title: "Role updated",
@@ -304,13 +304,13 @@ export function UserDetail({ userId }: UserDetailProps) {
       <div className="space-y-6">
         <div className="flex items-start gap-4">
           <Avatar className="h-20 w-20">
-            <AvatarImage src={user.avatar_url || "/placeholder.svg"} />
-            <AvatarFallback className="text-2xl">{getInitials(user.full_name)}</AvatarFallback>
+            <AvatarImage src={user.profile.avatar_url || "/placeholder.svg"} />
+            <AvatarFallback className="text-2xl">{getInitials(user.profile.display_name)}</AvatarFallback>
           </Avatar>
-
+    
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl font-bold">{user.full_name}</h1>
+              <h1 className="text-2xl font-bold">{user.profile.display_name}</h1>
               {user.email_verified ? (
                 <MailCheck className="h-5 w-5 text-green-500" />
               ) : (
@@ -318,11 +318,11 @@ export function UserDetail({ userId }: UserDetailProps) {
               )}
             </div>
             <p className="text-muted-foreground">{user.email}</p>
-            <p className="text-sm text-muted-foreground">@{user.username}</p>
+            <p className="text-sm text-muted-foreground">@{user.profile.display_name}</p>
 
             <div className="flex flex-wrap gap-2 mt-3">
               {getStatusBadge(user.status)}
-              {getRoleBadge(user.role)}
+              {getRoleBadge(user.role.name)}
               {user.email_verified ? (
                 <Badge variant="outline">Email Verified</Badge>
               ) : (
@@ -340,15 +340,15 @@ export function UserDetail({ userId }: UserDetailProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="role">Change Role</Label>
-              <Select value={user.role} onValueChange={handleRoleChange} disabled={isUpdating}>
+              <Select value={user.role.id} onValueChange={handleRoleChange} disabled={isUpdating}>
                 <SelectTrigger id="role">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="instructor">Instructor</SelectItem>
-                  <SelectItem value="moderator">Moderator</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="1">User</SelectItem>
+                  <SelectItem value="2">Instructor</SelectItem>
+                  <SelectItem value="3">Moderator</SelectItem>
+                  <SelectItem value="4">Admin</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -433,7 +433,7 @@ export function UserDetail({ userId }: UserDetailProps) {
               <Trophy className="h-4 w-4" />
               <span className="text-sm">Total Points</span>
             </div>
-            <p className="text-2xl font-bold">{user.total_points.toLocaleString()}</p>
+            <p className="text-2xl font-bold">{user.points?.toLocaleString()}</p>
           </Card>
 
           <Card className="p-4">
@@ -441,7 +441,7 @@ export function UserDetail({ userId }: UserDetailProps) {
               <TrendingUp className="h-4 w-4" />
               <span className="text-sm">Current Streak</span>
             </div>
-            <p className="text-2xl font-bold">{user.current_streak} days</p>
+            <p className="text-2xl font-bold">{user.streak?.toLocaleString()} days</p>
           </Card>
 
           <Card className="p-4">
@@ -478,7 +478,7 @@ export function UserDetail({ userId }: UserDetailProps) {
                 <Shield className="h-3 w-3" />
                 Role
               </span>
-              <p className="font-medium capitalize">{user.role}</p>
+              <p className="font-medium capitalize">{user.role.name}</p>
             </div>
             <div>
               <span className="text-muted-foreground flex items-center gap-2 mb-1">

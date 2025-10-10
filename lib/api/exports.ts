@@ -12,6 +12,7 @@ import { leaderboard } from './modules/leaderboard'
 import { courses } from './modules/courses'
 import { notifications } from './modules/notifications'
 import { submissions } from './modules/submissions'
+import { settings } from './modules/settings'
 
 export const api = {
   users,
@@ -30,4 +31,5 @@ export const api = {
   courses,
   notifications,
   submissions,
+  settings,
 }

@@ -44,12 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         throw new Error('User account is not active')
                     }
 
-                    // Optionally verify token with backend (commented out to reduce API calls on every page load)
-                    // const response = await apiClient.get('/api/v1/user/me')
-                    // if (response.data.status === 'success' && response.data.data) {
-                    //   setUser(response.data.data)
-                    // }
-
                     setUser(userData)
                 } catch (error) {
                     // Token is invalid, clear storage
@@ -86,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
 
             const response = await axios.post<LoginResponse>(
-                `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/v1/user/login`,
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/login`,
                 requestData,
                 {
                     headers: {
@@ -147,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             if (refreshToken) {
                 await axios.post<LogoutResponse>(
-                    `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/v1/user/logout`,
+                    `${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/v1/users/logout`,
                     { refresh_token: refreshToken },
                     {
                         headers: {

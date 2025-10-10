@@ -39,6 +39,28 @@ export function UserList({
   verifiedFilter,
   onVerifiedFilterChange,
 }: UserListProps) {
+  const colorPalettes = [
+    { bg: "bg-blue-100", text: "text-blue-700" },
+    { bg: "bg-emerald-100", text: "text-emerald-700" },
+    { bg: "bg-amber-100", text: "text-amber-800" },
+    { bg: "bg-purple-100", text: "text-purple-700" },
+    { bg: "bg-rose-100", text: "text-rose-700" },
+    { bg: "bg-cyan-100", text: "text-cyan-700" },
+    { bg: "bg-indigo-100", text: "text-indigo-700" },
+    { bg: "bg-fuchsia-100", text: "text-fuchsia-700" },
+    { bg: "bg-lime-100", text: "text-lime-800" },
+    { bg: "bg-sky-100", text: "text-sky-700" },
+  ]
+
+  const getColorIndex = (seed: string) => {
+    let hash = 0
+    for (let i = 0; i < seed.length; i++) {
+      hash = seed.charCodeAt(i) + ((hash << 5) - hash)
+      hash |= 0
+    }
+    return Math.abs(hash) % colorPalettes.length
+  }
+
   const getStatusBadge = (status: User["status"]) => {
     switch (status) {
       case "active":
@@ -138,12 +160,16 @@ export function UserList({
               >
                 <div className="col-span-4 flex items-center gap-3">
                   <Avatar>
-                    <AvatarImage src={user.avatar_url || "/placeholder.svg"} />
-                    <AvatarFallback>{getInitials(user.full_name)}</AvatarFallback>
+                    <AvatarImage src={user.profile.avatar_url || undefined} />
+                    <AvatarFallback
+                      className={`${colorPalettes[getColorIndex(user.email || user.id)].bg} ${colorPalettes[getColorIndex(user.email || user.id)].text}`}
+                    >
+                      {getInitials(user.profile.display_name || user.email || "U")}
+                    </AvatarFallback>
                   </Avatar>
                   <div>
                     <div className="font-medium flex items-center gap-2">
-                      {user.full_name}
+                      {user.profile.display_name || user.email}
                       {user.email_verified ? (
                         <MailCheck className="h-3 w-3 text-green-500" />
                       ) : (
@@ -151,20 +177,20 @@ export function UserList({
                       )}
                     </div>
                     <div className="text-sm text-muted-foreground">{user.email}</div>
-                    <div className="text-xs text-muted-foreground">@{user.username}</div>
+                    <div className="text-xs text-muted-foreground">@{user.profile.display_name}</div>
                   </div>
                 </div>
 
                 <div className="col-span-2">{getStatusBadge(user.status)}</div>
 
-                <div className="col-span-2 text-sm font-medium">{user.total_points.toLocaleString()} pts</div>
+                <div className="col-span-2 text-sm font-medium">{user.points?.toLocaleString()} pts</div>
 
                 <div className="col-span-2 text-sm text-muted-foreground">
                   {new Date(user.created_at).toLocaleDateString()}
                 </div>
 
                 <div className="col-span-1">
-                  <Badge variant="outline">{user.current_streak}d</Badge>
+                  <Badge variant="outline">{user.streak?.toLocaleString()}d</Badge>
                 </div>
 
                 <div className="col-span-1 flex justify-end">

@@ -1,27 +1,50 @@
 import type { User } from '@/types/user'
 import { delay } from '@/lib/api/utils'
 import { mockUsers } from '@/lib/mock-data'
+import apiClient from '@/lib/api/client'
 
 export const users = {
   getAll: async (): Promise<User[]> => {
-    const response = await fetch('/api/users')
-    if (!response.ok) throw new Error('Failed to fetch users')
-    return response.json()
+    const response = await apiClient.get<{ data?: { users?: User[] } }>(
+      '/api/v1/users',
+      {
+        withCredentials: true,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
+
+    return response.data?.data?.users || []
   },
 
-  getById: async (id: string): Promise<User> => {
-    await delay()
-    const user = mockUsers.find((u) => u.id === id)
-    if (!user) throw new Error('User not found')
-    return user
+  getById: async (id: string): Promise<User | undefined> => {
+    const response = await apiClient.get<{ data?: { user?: User } }>(
+      `/api/v1/users/${id}`,
+      {
+        withCredentials: true,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
+    return response.data?.data?.user
   },
 
   updateStatus: async (userId: string, status: User['status']): Promise<void> => {
-    const response = await fetch(`/api/users/${userId}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    })
-    if (!response.ok) throw new Error('Failed to update user status')
+    await apiClient.patch(
+      `/api/v1/users/${userId}/status`,
+      { status },
+      {
+        withCredentials: true,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
+  },
+  updateRole: async (userId: string, role_id: string): Promise<void> => {
+    await apiClient.patch(
+      `/api/v1/users/${userId}/role`,
+      { role_id },
+      {
+        withCredentials: true,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
   },
 }

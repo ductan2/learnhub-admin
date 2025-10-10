@@ -142,6 +142,23 @@ export const notifications = {
     return mockNotificationTemplates.map((template) => ({ ...template }))
   },
 
+  createTemplate: async (data: Omit<NotificationTemplate, 'id' | 'updated_at'>): Promise<NotificationTemplate> => {
+    await delay()
+
+    const newTemplate: NotificationTemplate = {
+      id: `template_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name: data.name,
+      description: data.description,
+      subject: data.subject,
+      body: data.body,
+      placeholders: data.placeholders || [],
+      updated_at: new Date().toISOString()
+    }
+
+    mockNotificationTemplates.push(newTemplate)
+    return { ...newTemplate }
+  },
+
   updateTemplate: async (id: string, updates: Partial<NotificationTemplate>): Promise<NotificationTemplate> => {
     await delay()
     const template = mockNotificationTemplates.find((t) => t.id === id)

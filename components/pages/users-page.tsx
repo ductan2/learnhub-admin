@@ -43,9 +43,8 @@ export function UsersPage() {
     if (searchQuery) {
       filtered = filtered.filter(
         (u) =>
-          u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          u.full_name.toLowerCase().includes(searchQuery.toLowerCase()),
+          (u.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (u.profile.display_name || '').toLowerCase().includes(searchQuery.toLowerCase())
       )
     }
 

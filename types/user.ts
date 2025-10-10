@@ -1,23 +1,30 @@
+export interface UserProfile {
+    display_name: string
+    avatar_url?: string
+    locale: string
+    time_zone: string
+    updated_at: string
+}
+
 export interface User {
     id: string
     email: string
-    username: string
-    full_name: string
-    avatar_url?: string
     email_verified: boolean
-    role: "user" | "admin" | "moderator" | "instructor"
-    status: "active" | "banned" | "suspended" | "locked" | "disabled" | "deleted"
-    tenant: string
     created_at: string
     updated_at: string
-    last_login?: string
+    deleted_at?: string
     last_login_at?: string
     last_login_ip?: string
-    lockout_until?: string | null
-    deleted_at?: string | null
-    total_points: number
-    current_streak: number
-    longest_streak?: number
+    lockout_until?: string
+    status: "active" | "banned" | "suspended" | "locked" | "disabled" | "deleted"
+    profile: UserProfile
+    points?: number
+    streak?: number
+}
+
+export interface UserRole {
+    id: string
+    name: string
 }
 
 // User-related filter types
@@ -32,7 +39,7 @@ export interface UserFilters {
 // User-related DTO types
 export interface UpdateUserRoleDto {
     user_id: string
-    role: User["role"]
+    role: User["status"]
 }
 
 export interface UpdateUserTenantDto {

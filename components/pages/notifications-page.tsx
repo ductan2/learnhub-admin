@@ -118,6 +118,23 @@ export function NotificationsPage() {
     }
   }
 
+  const handleCreateTemplate = async (template: NotificationTemplate) => {
+    try {
+      const newTemplate = await api.notifications.createTemplate(template)
+      setTemplates((prev) => [...prev, newTemplate])
+      toast({
+        title: "Template created",
+        description: `${newTemplate.name} email template created successfully`,
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create email template",
+        variant: "destructive",
+      })
+    }
+  }
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "high":
@@ -188,7 +205,11 @@ export function NotificationsPage() {
             <DialogTitle>Notification Templates</DialogTitle>
           </DialogHeader>
           <div className="mt-4">
-            <NotificationTemplatesManager templates={templates} onSaveTemplate={handleTemplateUpdate} />
+            <NotificationTemplatesManager
+              templates={templates}
+              onSaveTemplate={handleTemplateUpdate}
+              onCreateTemplate={handleCreateTemplate}
+            />
           </div>
         </DialogContent>
       </Dialog>

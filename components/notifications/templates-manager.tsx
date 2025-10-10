@@ -8,11 +8,13 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import type { NotificationTemplate } from "@/types/notification"
-import { Clock, PencilLine } from "lucide-react"
+import { Clock, PencilLine, Plus } from "lucide-react"
+import { CreateTemplateDialog } from "./create-template-dialog"
 
 interface NotificationTemplatesManagerProps {
   templates: NotificationTemplate[]
   onSaveTemplate: (id: string, updates: Partial<NotificationTemplate>) => Promise<void> | void
+  onCreateTemplate?: (template: NotificationTemplate) => void
 }
 
 type TemplateFormState = {
@@ -20,10 +22,11 @@ type TemplateFormState = {
   body: string
 }
 
-export function NotificationTemplatesManager({ templates, onSaveTemplate }: NotificationTemplatesManagerProps) {
+export function NotificationTemplatesManager({ templates, onSaveTemplate, onCreateTemplate }: NotificationTemplatesManagerProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [formState, setFormState] = useState<TemplateFormState>({ subject: "", body: "" })
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
 
   const startEditing = (template: NotificationTemplate) => {
     setEditingId(template.id)
@@ -49,21 +52,47 @@ export function NotificationTemplatesManager({ templates, onSaveTemplate }: Noti
     }
   }
 
+  const handleCreateTemplate = (template: NotificationTemplate) => {
+    onCreateTemplate?.(template)
+    setCreateDialogOpen(false)
+  }
+
   if (templates.length === 0) {
     return (
-      <Card className="p-6">
-        <div className="space-y-2 text-center">
-          <PencilLine className="mx-auto h-8 w-8 text-muted-foreground" />
-          <h3 className="text-lg font-semibold">No email templates configured</h3>
-          <p className="text-sm text-muted-foreground">
-            Create notification templates in your backend to manage email content from here.
-          </p>
-        </div>
-      </Card>
+      <>
+        <Card className="p-6">
+          <div className="space-y-4 text-center">
+            <PencilLine className="mx-auto h-8 w-8 text-muted-foreground" />
+            <h3 className="text-lg font-semibold">No email templates configured</h3>
+            <p className="text-sm text-muted-foreground">
+              Create your first notification template to get started.
+            </p>
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Template
+            </Button>
+          </div>
+        </Card>
+
+        <CreateTemplateDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          onSuccess={handleCreateTemplate}
+        />
+      </>
     )
   }
 
   return (
+    <>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">Email Templates</h2>
+        <Button onClick={() => setCreateDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Template
+        </Button>
+      </div>
+
       <div className="space-y-4">
         {templates.map((template) => {
           const isEditing = editingId === template.id
@@ -160,5 +189,12 @@ export function NotificationTemplatesManager({ templates, onSaveTemplate }: Noti
           )
         })}
       </div>
+
+      <CreateTemplateDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSuccess={handleCreateTemplate}
+      />
+    </>
   )
 }
