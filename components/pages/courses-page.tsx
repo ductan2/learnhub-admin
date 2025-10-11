@@ -23,11 +23,25 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Plus, Search, BookOpen, Users, MoreVertical, Edit, Copy, Trash2, Eye, EyeOff, Star } from "lucide-react"
+import {
+  Plus,
+  Search,
+  BookOpen,
+  Users,
+  MoreVertical,
+  Edit,
+  Copy,
+  Trash2,
+  Eye,
+  EyeOff,
+  Star,
+  MessageCircle,
+} from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { api } from "@/lib/api/exports"
 import { CourseFormDialog } from "@/components/courses/course-form-dialog"
 import { CourseLessonsDialog } from "@/components/courses/course-lessons-dialog"
+import { CourseReviewsDialog } from "@/components/courses/course-reviews-dialog"
 import type { Course } from "@/types/course"
 import type { Topic, Level } from "@/types/common"
 
@@ -44,6 +58,7 @@ export function CoursesPage() {
   const [loading, setLoading] = useState(true)
   const [showFormDialog, setShowFormDialog] = useState(false)
   const [showLessonsDialog, setShowLessonsDialog] = useState(false)
+  const [showReviewsDialog, setShowReviewsDialog] = useState(false)
   const [selectedCourse, setSelectedCourse] = useState<Course | undefined>()
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null)
 
@@ -123,6 +138,11 @@ export function CoursesPage() {
     setShowLessonsDialog(true)
   }
 
+  const handleViewReviews = (course: Course) => {
+    setSelectedCourse(course)
+    setShowReviewsDialog(true)
+  }
+
   const handleTogglePublish = async (course: Course) => {
     try {
       await api.courses.publish(course.id, !course.is_published)
@@ -177,11 +197,13 @@ export function CoursesPage() {
     }
   }
 
-  const getTopicName = (topicId: string) => {
+  const getTopicName = (topicId?: string | null) => {
+    if (!topicId) return "No topic"
     return topics.find((t) => t.id === topicId)?.name || "Unknown"
   }
 
-  const getLevelName = (levelId: string) => {
+  const getLevelName = (levelId?: string | null) => {
+    if (!levelId) return "No level"
     return levels.find((l) => l.id === levelId)?.name || "Unknown"
   }
 
@@ -331,6 +353,10 @@ export function CoursesPage() {
                         <Copy className="h-4 w-4 mr-2" />
                         Duplicate
                       </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleViewReviews(course)}>
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        View Reviews
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => setCourseToDelete(course)}
@@ -349,12 +375,23 @@ export function CoursesPage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className="font-normal">
-                    {getTopicName(course.topic_id)}
+                    {getTopicName(course.topic_id ?? undefined)}
                   </Badge>
                   {course.price && course.price > 0 && (
                     <Badge variant="outline" className="font-normal">
                       ${course.price.toFixed(2)}
                     </Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Star className={`h-4 w-4 ${course.review_count > 0 ? "text-amber-500 fill-amber-500" : "text-muted-foreground"}`} />
+                  {course.review_count > 0 ? (
+                    <span>
+                      {course.average_rating ? course.average_rating.toFixed(1) : "0.0"} · {course.review_count}{" "}
+                      {course.review_count === 1 ? "review" : "reviews"}
+                    </span>
+                  ) : (
+                    <span>No reviews yet</span>
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -375,6 +412,9 @@ export function CoursesPage() {
                 <Button variant="outline" className="flex-1 bg-transparent" onClick={() => handleManageLessons(course)}>
                   Manage Lessons
                 </Button>
+                <Button variant="outline" className="flex-1" onClick={() => handleViewReviews(course)}>
+                  Reviews
+                </Button>
                 <Button className="flex-1" onClick={() => handleEditCourse(course)}>
                   Edit Course
                 </Button>
@@ -393,7 +433,9 @@ export function CoursesPage() {
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              <span>{filteredCourses.reduce((sum, c) => sum + (c.enrollment_count || 0), 0)} total enrollments</span>
+              <span>
+                {filteredCourses.reduce((sum, c) => sum + (c.enrollment_count || 0), 0)} total enrollments
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
@@ -417,6 +459,15 @@ export function CoursesPage() {
           onOpenChange={setShowLessonsDialog}
           course={selectedCourse}
           onSuccess={loadData}
+        />
+      )}
+
+      {selectedCourse && (
+        <CourseReviewsDialog
+          open={showReviewsDialog}
+          onOpenChange={setShowReviewsDialog}
+          course={selectedCourse}
+          onRefresh={loadData}
         />
       )}
 

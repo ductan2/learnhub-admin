@@ -47,13 +47,13 @@ export function CourseFormDialog({ open, onOpenChange, course, onSuccess }: Cour
     if (course) {
       setFormData({
         title: course.title,
-        description: course.description,
-        topic_id: course.topic_id,
-        level_id: course.level_id,
-        instructor_id: course.instructor_id,
-        thumbnail_url: course.thumbnail_url,
-        price: course.price,
-        duration_hours: course.duration_hours,
+        description: course.description ?? "",
+        topic_id: course.topic_id ?? "",
+        level_id: course.level_id ?? "",
+        instructor_id: course.instructor_id ?? "",
+        thumbnail_url: course.thumbnail_url ?? undefined,
+        price: course.price ?? undefined,
+        duration_hours: course.duration_hours ?? undefined,
         is_published: course.is_published,
         is_featured: course.is_featured,
       })

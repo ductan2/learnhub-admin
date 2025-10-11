@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
 import { api } from "@/lib/api/exports"
 import { Plus, Search, GripVertical, X, BookOpen } from "lucide-react"
-import type { Course } from "@/types/course"
+import type { Course, CourseLesson } from "@/types/course"
 import type { Lesson } from "@/types/lesson"
 import type { Topic, Level } from "@/types/common"
 
@@ -21,7 +21,7 @@ interface CourseLessonsDialogProps {
 
 export function CourseLessonsDialog({ open, onOpenChange, course, onSuccess }: CourseLessonsDialogProps) {
   const { toast } = useToast()
-  const [courseLessons, setCourseLessons] = useState<Lesson[]>([])
+  const [courseLessons, setCourseLessons] = useState<CourseLesson[]>([])
   const [availableLessons, setAvailableLessons] = useState<Lesson[]>([])
   const [topics, setTopics] = useState<Topic[]>([])
   const [levels, setLevels] = useState<Level[]>([])
@@ -40,12 +40,13 @@ export function CourseLessonsDialog({ open, onOpenChange, course, onSuccess }: C
       setLoading(true)
       const [courseLessonsData, allLessons, topicsData, levelsData] = await Promise.all([
         api.courses.getLessons(course.id),
-        api.lessons.getAll(),
+        api.lessons.getAll({ is_published: true }),
         api.topics.getAll(),
         api.levels.getAll(),
       ])
       setCourseLessons(courseLessonsData)
-      setAvailableLessons(allLessons.filter((l) => !course.lesson_ids.includes(l.id) && l.is_published))
+      const assignedIds = new Set(courseLessonsData.map((lesson) => lesson.lesson_id))
+      setAvailableLessons(allLessons.filter((lesson) => lesson.is_published && !assignedIds.has(lesson.id)))
       setTopics(topicsData)
       setLevels(levelsData)
     } catch (error) {
@@ -65,6 +66,7 @@ export function CourseLessonsDialog({ open, onOpenChange, course, onSuccess }: C
       await api.courses.addLesson({
         course_id: course.id,
         lesson_id: lessonId,
+        ord: courseLessons.length + 1,
       })
       toast({
         title: "Success",
@@ -81,9 +83,9 @@ export function CourseLessonsDialog({ open, onOpenChange, course, onSuccess }: C
     }
   }
 
-  const handleRemoveLesson = async (lessonId: string) => {
+  const handleRemoveLesson = async (courseLessonId: string) => {
     try {
-      await api.courses.removeLesson(course.id, lessonId)
+      await api.courses.removeLesson(courseLessonId)
       toast({
         title: "Success",
         description: "Lesson removed from course",
@@ -99,8 +101,8 @@ export function CourseLessonsDialog({ open, onOpenChange, course, onSuccess }: C
     }
   }
 
-  const getTopicName = (topicId: string) => topics.find((t) => t.id === topicId)?.name || "Unknown"
-  const getLevelName = (levelId: string) => levels.find((l) => l.id === levelId)?.name || "Unknown"
+  const getTopicName = (topicId?: string | null) => topics.find((t) => t.id === topicId)?.name || "Unknown"
+  const getLevelName = (levelId?: string | null) => levels.find((l) => l.id === levelId)?.name || "Unknown"
 
   const filteredAvailableLessons = availableLessons.filter(
     (l) =>
@@ -140,30 +142,32 @@ export function CourseLessonsDialog({ open, onOpenChange, course, onSuccess }: C
               </div>
             ) : (
               <div className="space-y-2">
-                {courseLessons.map((lesson, index) => (
+                {courseLessons.map((courseLesson, index) => (
                   <div
-                    key={lesson.id}
+                    key={courseLesson.id}
                     className="flex items-center gap-3 p-3 border border-border rounded-lg bg-card hover:bg-accent/50 transition-colors"
                   >
                     <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-medium text-muted-foreground">#{index + 1}</span>
-                        <h4 className="text-sm font-medium text-foreground truncate">{lesson.title}</h4>
+                        <h4 className="text-sm font-medium text-foreground truncate">
+                          {courseLesson.lesson?.title || "Untitled lesson"}
+                        </h4>
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="outline" className="text-xs">
-                          {getTopicName(lesson.topic_id)}
+                          {getTopicName(courseLesson.lesson?.topic?.id)}
                         </Badge>
                         <Badge variant="secondary" className="text-xs">
-                          {getLevelName(lesson.level_id)}
+                          {getLevelName(courseLesson.lesson?.level?.id)}
                         </Badge>
                       </div>
                     </div>
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => handleRemoveLesson(lesson.id)}
+                      onClick={() => handleRemoveLesson(courseLesson.id)}
                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
                     >
                       <X className="h-4 w-4" />
