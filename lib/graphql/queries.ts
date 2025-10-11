@@ -295,6 +295,304 @@ export const DELETE_MEDIA = gql`
   }
 `
 
+// Course queries and mutations
+export const GET_COURSES = gql`
+  query GetCourses(
+    $filter: CourseFilterInput
+    $page: Int
+    $pageSize: Int
+    $orderBy: CourseOrderInput
+  ) {
+    courses(filter: $filter, page: $page, pageSize: $pageSize, orderBy: $orderBy) {
+      items {
+        id
+        title
+        description
+        topicId
+        levelId
+        instructorId
+        thumbnailURL
+        isPublished
+        isFeatured
+        price
+        durationHours
+        averageRating
+        reviewCount
+        createdAt
+        updatedAt
+        publishedAt
+        lessons {
+          id
+          lessonId
+        }
+        topic {
+          id
+          name
+        }
+        level {
+          id
+          name
+        }
+      }
+      totalCount
+      page
+      pageSize
+    }
+  }
+`
+
+export const GET_COURSE = gql`
+  query GetCourse($id: ID!) {
+    course(id: $id) {
+      id
+      title
+      description
+      topicId
+      levelId
+      instructorId
+      thumbnailURL
+      isPublished
+      isFeatured
+      price
+      durationHours
+      averageRating
+      reviewCount
+      createdAt
+      updatedAt
+      publishedAt
+      topic {
+        id
+        name
+      }
+      level {
+        id
+        name
+      }
+      lessons {
+        id
+        courseId
+        lessonId
+        ord
+        isRequired
+        createdAt
+        lesson {
+          id
+          title
+          description
+          isPublished
+          topic {
+            id
+            name
+          }
+          level {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+`
+
+export const CREATE_COURSE = gql`
+  mutation CreateCourse($input: CreateCourseInput!) {
+    createCourse(input: $input) {
+      id
+      title
+      description
+      topicId
+      levelId
+      instructorId
+      thumbnailURL
+      isPublished
+      isFeatured
+      price
+      durationHours
+      averageRating
+      reviewCount
+      createdAt
+      updatedAt
+      publishedAt
+      lessons {
+        id
+        lessonId
+      }
+    }
+  }
+`
+
+export const UPDATE_COURSE = gql`
+  mutation UpdateCourse($id: ID!, $input: UpdateCourseInput!) {
+    updateCourse(id: $id, input: $input) {
+      id
+      title
+      description
+      topicId
+      levelId
+      instructorId
+      thumbnailURL
+      isPublished
+      isFeatured
+      price
+      durationHours
+      averageRating
+      reviewCount
+      createdAt
+      updatedAt
+      publishedAt
+      lessons {
+        id
+        lessonId
+      }
+    }
+  }
+`
+
+export const DELETE_COURSE = gql`
+  mutation DeleteCourse($id: ID!) {
+    deleteCourse(id: $id)
+  }
+`
+
+export const PUBLISH_COURSE = gql`
+  mutation PublishCourse($id: ID!) {
+    publishCourse(id: $id) {
+      id
+      isPublished
+      publishedAt
+      updatedAt
+    }
+  }
+`
+
+export const UNPUBLISH_COURSE = gql`
+  mutation UnpublishCourse($id: ID!) {
+    unpublishCourse(id: $id) {
+      id
+      isPublished
+      updatedAt
+    }
+  }
+`
+
+export const GET_COURSE_LESSONS = gql`
+  query GetCourseLessons(
+    $courseId: ID!
+    $filter: CourseLessonFilterInput
+    $page: Int
+    $pageSize: Int
+    $orderBy: CourseLessonOrderInput
+  ) {
+    courseLessons(
+      courseId: $courseId
+      filter: $filter
+      page: $page
+      pageSize: $pageSize
+      orderBy: $orderBy
+    ) {
+      items {
+        id
+        courseId
+        lessonId
+        ord
+        isRequired
+        createdAt
+        lesson {
+          id
+          title
+          description
+          isPublished
+          topic {
+            id
+            name
+          }
+          level {
+            id
+            name
+          }
+        }
+      }
+      totalCount
+      page
+      pageSize
+    }
+  }
+`
+
+export const ADD_COURSE_LESSON = gql`
+  mutation AddCourseLesson($courseId: ID!, $input: AddCourseLessonInput!) {
+    addCourseLesson(courseId: $courseId, input: $input) {
+      id
+      courseId
+      lessonId
+      ord
+      isRequired
+      createdAt
+    }
+  }
+`
+
+export const REMOVE_COURSE_LESSON = gql`
+  mutation RemoveCourseLesson($id: ID!) {
+    removeCourseLesson(id: $id)
+  }
+`
+
+export const REORDER_COURSE_LESSONS = gql`
+  mutation ReorderCourseLessons($courseId: ID!, $lessonIds: [ID!]!) {
+    reorderCourseLessons(courseId: $courseId, lessonIds: $lessonIds) {
+      id
+      courseId
+      lessonId
+      ord
+    }
+  }
+`
+
+export const GET_COURSE_REVIEWS = gql`
+  query GetCourseReviews($courseId: ID!, $page: Int, $pageSize: Int) {
+    course(id: $courseId) {
+      id
+      averageRating
+      reviewCount
+      reviews(page: $page, pageSize: $pageSize) {
+        items {
+          id
+          courseId
+          userId
+          rating
+          comment
+          createdAt
+          updatedAt
+        }
+        totalCount
+        page
+        pageSize
+      }
+    }
+  }
+`
+
+export const SUBMIT_COURSE_REVIEW = gql`
+  mutation SubmitCourseReview($input: SubmitCourseReviewInput!) {
+    submitCourseReview(input: $input) {
+      id
+      courseId
+      userId
+      rating
+      comment
+      createdAt
+      updatedAt
+    }
+  }
+`
+
+export const DELETE_COURSE_REVIEW = gql`
+  mutation DeleteCourseReview($courseId: ID!) {
+    deleteCourseReview(courseId: $courseId)
+  }
+`
+
 // Quiz queries and mutations
 export const GET_QUIZ = gql`
   query GetQuiz($id: ID!) {
