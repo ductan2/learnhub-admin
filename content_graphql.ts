@@ -289,6 +289,14 @@ export const GET_QUIZ = gql`
     quiz(id: $id) {
       id
       lessonId
+      topic {
+        id
+        name
+      }
+      level {
+        id
+        name
+      }
       title
       description
       totalPoints
@@ -296,10 +304,12 @@ export const GET_QUIZ = gql`
       createdAt
       tags {
         id
+        slug
         name
       }
       questions {
         id
+        quizId
         ord
         type
         prompt
@@ -336,6 +346,14 @@ export const GET_QUIZZES = gql`
       items {
         id
         lessonId
+        topic {
+          id
+          name
+        }
+        level {
+          id
+          name
+        }
         title
         description
         totalPoints
@@ -343,6 +361,7 @@ export const GET_QUIZZES = gql`
         createdAt
         tags {
           id
+          slug
           name
         }
       }
@@ -602,6 +621,14 @@ export const CREATE_QUIZ = gql`
     createQuiz(input: $input) {
       id
       lessonId
+      topic {
+        id
+        name
+      }
+      level {
+        id
+        name
+      }
       title
       description
       totalPoints
@@ -609,9 +636,60 @@ export const CREATE_QUIZ = gql`
       createdAt
       tags {
         id
+        slug
         name
       }
     }
+  }
+`;
+
+export const UPDATE_QUIZ = gql`
+  mutation UpdateQuiz($id: ID!, $input: UpdateQuizInput!) {
+    updateQuiz(id: $id, input: $input) {
+      id
+      lessonId
+      topic {
+        id
+        name
+      }
+      level {
+        id
+        name
+      }
+      title
+      description
+      totalPoints
+      timeLimitS
+      createdAt
+      tags {
+        id
+        slug
+        name
+      }
+      questions {
+        id
+        quizId
+        ord
+        type
+        prompt
+        promptMedia
+        points
+        metadata
+        options {
+          id
+          ord
+          label
+          isCorrect
+          feedback
+        }
+      }
+    }
+  }
+`;
+
+export const DELETE_QUIZ = gql`
+  mutation DeleteQuiz($id: ID!) {
+    deleteQuiz(id: $id)
   }
 `;
 

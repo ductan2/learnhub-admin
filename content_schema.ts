@@ -357,6 +357,15 @@ export interface CreateQuizInput {
   timeLimitS?: number;
 }
 
+export interface UpdateQuizInput {
+  lessonId?: string;
+  topicId?: string;
+  levelId?: string;
+  title?: string;
+  description?: string;
+  timeLimitS?: number;
+}
+
 export interface QuizOrderInput {
   field?: QuizOrderField;
   direction?: OrderDirection;
@@ -643,6 +652,15 @@ export interface CreateQuizVariables {
   input: CreateQuizInput;
 }
 
+export interface UpdateQuizVariables {
+  id: string;
+  input: UpdateQuizInput;
+}
+
+export interface DeleteQuizVariables {
+  id: string;
+}
+
 export interface AddQuizQuestionVariables {
   quizId: string;
   input: CreateQuizQuestionInput;
@@ -840,6 +858,14 @@ export interface AddFlashcardResponse {
 
 export interface CreateQuizResponse {
   createQuiz: Quiz;
+}
+
+export interface UpdateQuizResponse {
+  updateQuiz: Quiz;
+}
+
+export interface DeleteQuizResponse {
+  deleteQuiz: boolean;
 }
 
 export interface AddQuizQuestionResponse {
