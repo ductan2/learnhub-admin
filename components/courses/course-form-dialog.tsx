@@ -74,9 +74,12 @@ export function CourseFormDialog({ open, onOpenChange, course, onSuccess }: Cour
 
   const loadMetadata = async () => {
     try {
-      const [topicsData, levelsData] = await Promise.all([api.topics.getAll(), api.levels.getAll()])
-      setTopics(topicsData)
-      setLevels(levelsData)
+      const [topicsResponse, levelsResponse] = await Promise.all([
+        api.topics.getAll({ pageSize: 1000 }),
+        api.levels.getAll({ pageSize: 1000 }),
+      ])
+      setTopics(topicsResponse.items)
+      setLevels(levelsResponse.items)
     } catch (error) {
       console.error("Failed to load metadata:", error)
     }

@@ -75,12 +75,12 @@ export function CoursesPage() {
       setLoading(true)
       const [coursesData, topicsData, levelsData] = await Promise.all([
         api.courses.getAll(),
-        api.topics.getAll(),
-        api.levels.getAll(),
+        api.topics.getAll({ pageSize: 1000 }),
+        api.levels.getAll({ pageSize: 1000 }),
       ])
       setCourses(coursesData)
-      setTopics(topicsData)
-      setLevels(levelsData)
+      setTopics(topicsData.items)
+      setLevels(levelsData.items)
     } catch (error) {
       console.error("Failed to load courses:", error)
       toast({

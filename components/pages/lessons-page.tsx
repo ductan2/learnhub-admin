@@ -109,13 +109,13 @@ export function LessonsPage() {
   const loadMetadata = useCallback(async () => {
     try {
       const [topicsData, levelsData] = await Promise.all([
-        api.topics.getAll(),
-        api.levels.getAll(),
+        api.topics.getAll({ pageSize: 1000 }),
+        api.levels.getAll({ pageSize: 1000 }),
       ])
 
       if (isMountedRef.current) {
-        setTopics(topicsData)
-        setLevels(levelsData)
+        setTopics(topicsData.items)
+        setLevels(levelsData.items)
       }
     } catch (error) {
       if (isMountedRef.current) {

@@ -41,14 +41,14 @@ export function CourseLessonsDialog({ open, onOpenChange, course, onSuccess }: C
       const [courseLessonsData, allLessons, topicsData, levelsData] = await Promise.all([
         api.courses.getLessons(course.id),
         api.lessons.getAll({ is_published: true }),
-        api.topics.getAll(),
-        api.levels.getAll(),
+        api.topics.getAll({ pageSize: 1000 }),
+        api.levels.getAll({ pageSize: 1000 }),
       ])
       setCourseLessons(courseLessonsData)
       const assignedIds = new Set(courseLessonsData.map((lesson) => lesson.lesson_id))
       setAvailableLessons(allLessons.filter((lesson) => lesson.is_published && !assignedIds.has(lesson.id)))
-      setTopics(topicsData)
-      setLevels(levelsData)
+      setTopics(topicsData.items)
+      setLevels(levelsData.items)
     } catch (error) {
       console.error("Failed to load lessons:", error)
       toast({
