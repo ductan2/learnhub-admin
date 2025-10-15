@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { ListOrdered, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react"
 
 import { api } from "@/lib/api/exports"
@@ -31,10 +31,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { LevelFormDialog } from "@/components/levels/level-form-dialog"
+import { useSearchPagination } from "@/hooks/use-search-pagination"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 
 export function LevelsPage() {
   const [levels, setLevels] = useState<Level[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [showFormDialog, setShowFormDialog] = useState(false)
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null)
@@ -42,6 +50,8 @@ export function LevelsPage() {
   const [isProcessing, setIsProcessing] = useState(false)
 
   const { toast } = useToast()
+  const { searchQuery, currentPage, updateSearchQuery, updatePage } = useSearchPagination()
+  const ITEMS_PER_PAGE = 10
 
   const loadLevels = useCallback(async (search?: string) => {
     setIsLoading(true)
@@ -62,13 +72,38 @@ export function LevelsPage() {
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      loadLevels(searchQuery)
+      loadLevels(searchQuery.trim())
     }, 300)
 
     return () => {
       clearTimeout(handler)
     }
   }, [loadLevels, searchQuery])
+
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(levels.length / ITEMS_PER_PAGE)), [levels.length])
+  const paginatedLevels = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    return levels.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+  }, [currentPage, levels])
+  const pageNumbers = useMemo(() => Array.from({ length: totalPages }, (_, index) => index + 1), [totalPages])
+  const { startItem, endItem } = useMemo(() => {
+    if (levels.length === 0) {
+      return { startItem: 0, endItem: 0 }
+    }
+
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE + 1
+    const endIndex = Math.min(currentPage * ITEMS_PER_PAGE, levels.length)
+
+    return { startItem: startIndex, endItem: endIndex }
+  }, [currentPage, levels.length])
+
+  useEffect(() => {
+    if (isLoading) return
+
+    if (currentPage > totalPages) {
+      updatePage(totalPages)
+    }
+  }, [currentPage, isLoading, totalPages, updatePage])
 
   const handleDialogChange = (open: boolean) => {
     if (!open) {
@@ -140,13 +175,13 @@ export function LevelsPage() {
             <Input
               placeholder="Search levels..."
               value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
+              onChange={(event) => updateSearchQuery(event.target.value)}
               className="pl-9"
             />
           </div>
           <Button
             variant="outline"
-            onClick={() => loadLevels(searchQuery)}
+            onClick={() => loadLevels(searchQuery.trim())}
             disabled={isLoading}
             className="whitespace-nowrap"
           >
@@ -191,7 +226,7 @@ export function LevelsPage() {
                   </EmptyDescription>
                 </EmptyHeader>
                 <EmptyContent>
-                  <Button onClick={() => loadLevels(searchQuery)} variant="secondary" disabled={isLoading}>
+                  <Button onClick={() => loadLevels(searchQuery.trim())} variant="secondary" disabled={isLoading}>
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Reload levels
                   </Button>
@@ -199,56 +234,110 @@ export function LevelsPage() {
               </Empty>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-24">Code</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead className="hidden md:table-cell">Identifier</TableHead>
-                  <TableHead className="w-28 text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {levels.map((level) => (
-                  <TableRow key={level.id} className="hover:bg-accent/40">
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">
-                          {level.code}
-                        </div>
-                        <Badge variant="secondary" className="md:hidden">
-                          #{level.id}
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">{level.name}</TableCell>
-                    <TableCell className="hidden md:table-cell text-muted-foreground font-mono text-xs">
-                      {level.code}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEditLevel(level)}
-                          aria-label={`Edit ${level.name}`}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setLevelToDelete(level)}
-                          aria-label={`Delete ${level.name}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            <div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-24">Code</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead className="hidden md:table-cell">Identifier</TableHead>
+                    <TableHead className="w-28 text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {paginatedLevels.map((level) => (
+                    <TableRow key={level.id} className="hover:bg-accent/40">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">
+                            {level.code}
+                          </div>
+                          <Badge variant="secondary" className="md:hidden">
+                            #{level.id}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">{level.name}</TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground font-mono text-xs">
+                        {level.code}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditLevel(level)}
+                            aria-label={`Edit ${level.name}`}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setLevelToDelete(level)}
+                            aria-label={`Delete ${level.name}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <div className="flex flex-col gap-4 border-t border-border/60 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Showing {startItem}-{endItem} of {levels.length} levels
+                </p>
+                {totalPages > 1 && (
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          onClick={(event) => {
+                            event.preventDefault()
+                            if (currentPage > 1) {
+                              updatePage(currentPage - 1)
+                            }
+                          }}
+                          aria-disabled={currentPage === 1}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : undefined}
+                        />
+                      </PaginationItem>
+                      {pageNumbers.map((pageNumber) => (
+                        <PaginationItem key={pageNumber}>
+                          <PaginationLink
+                            href="#"
+                            onClick={(event) => {
+                              event.preventDefault()
+                              updatePage(pageNumber)
+                            }}
+                            isActive={pageNumber === currentPage}
+                            size="default"
+                          >
+                            {pageNumber}
+                          </PaginationLink>
+                        </PaginationItem>
+                      ))}
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          onClick={(event) => {
+                            event.preventDefault()
+                            if (currentPage < totalPages) {
+                              updatePage(currentPage + 1)
+                            }
+                          }}
+                          aria-disabled={currentPage === totalPages}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : undefined}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                )}
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
