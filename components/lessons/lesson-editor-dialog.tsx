@@ -15,9 +15,10 @@ interface LessonEditorDialogProps {
   onClose: () => void
   lesson: Lesson | null
   onSave: (sections: LessonSection[]) => void
+  initialTab?: "edit" | "preview"
 }
 
-export function LessonEditorDialog({ open, onClose, lesson, onSave }: LessonEditorDialogProps) {
+export function LessonEditorDialog({ open, onClose, lesson, onSave, initialTab = "edit" }: LessonEditorDialogProps) {
   const [sections, setSections] = useState<LessonSection[]>([])
   const [initialSections, setInitialSections] = useState<LessonSection[]>([])
   const [activeTab, setActiveTab] = useState("edit")
@@ -56,10 +57,12 @@ export function LessonEditorDialog({ open, onClose, lesson, onSave }: LessonEdit
       return
     }
 
+    setActiveTab(initialTab)
+
     if (lesson) {
       loadSections(lesson.id)
     }
-  }, [lesson, loadSections, open])
+  }, [initialTab, lesson, loadSections, open])
 
   const handleSave = async () => {
     if (!lesson) return

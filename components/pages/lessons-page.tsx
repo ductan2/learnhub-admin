@@ -33,9 +33,14 @@ export function LessonsPage() {
     open: false,
     lesson: null,
   })
-  const [editorDialog, setEditorDialog] = useState<{ open: boolean; lesson: Lesson | null }>({
+  const [editorDialog, setEditorDialog] = useState<{
+    open: boolean
+    lesson: Lesson | null
+    initialTab: "edit" | "preview"
+  }>({
     open: false,
     lesson: null,
+    initialTab: "edit",
   })
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; lessonId: string | null }>({
     open: false,
@@ -229,10 +234,15 @@ export function LessonsPage() {
         topics={topics}
         levels={levels}
         onCreateLesson={() => setFormDialog({ open: true, lesson: null })}
-        onEditLesson={(lesson) => setEditorDialog({ open: true, lesson })}
+        onEditLesson={(lesson) => setFormDialog({ open: true, lesson })}
+        onEditLessonSections={(lesson) =>
+          setEditorDialog({ open: true, lesson, initialTab: "edit" })
+        }
         onDeleteLesson={(lessonId) => setDeleteDialog({ open: true, lessonId })}
         onTogglePublish={handleTogglePublish}
-        onPreviewLesson={(lesson) => setEditorDialog({ open: true, lesson })}
+        onPreviewLesson={(lesson) =>
+          setEditorDialog({ open: true, lesson, initialTab: "preview" })
+        }
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         topicFilter={topicFilter}
@@ -255,9 +265,10 @@ export function LessonsPage() {
 
       <LessonEditorDialog
         open={editorDialog.open}
-        onClose={() => setEditorDialog({ open: false, lesson: null })}
+        onClose={() => setEditorDialog({ open: false, lesson: null, initialTab: "edit" })}
         lesson={editorDialog.lesson}
         onSave={handleSaveSections}
+        initialTab={editorDialog.initialTab}
       />
 
       <AlertDialog
