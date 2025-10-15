@@ -1,5 +1,16 @@
 "use client"
-import { BookOpen, Plus, Search, Eye, Edit, Trash2, Globe, GlobeLock, Loader2 } from "lucide-react"
+import {
+  BookOpen,
+  Plus,
+  Search,
+  Eye,
+  Edit,
+  Trash2,
+  Globe,
+  GlobeLock,
+  Loader2,
+  ListChecks,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -21,6 +32,7 @@ interface LessonListProps {
   levels: Level[]
   onCreateLesson: () => void
   onEditLesson: (lesson: Lesson) => void
+  onEditLessonSections: (lesson: Lesson) => void
   onDeleteLesson: (lessonId: string) => void
   onTogglePublish: (lessonId: string, published: boolean) => void
   onPreviewLesson: (lesson: Lesson) => void
@@ -41,6 +53,7 @@ export function LessonList({
   levels,
   onCreateLesson,
   onEditLesson,
+  onEditLessonSections,
   onDeleteLesson,
   onTogglePublish,
   onPreviewLesson,
@@ -191,7 +204,11 @@ export function LessonList({
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onEditLesson(lesson)}>
                         <Edit className="h-4 w-4 mr-2" />
-                        Edit
+                        Edit Lesson
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onEditLessonSections(lesson)}>
+                        <ListChecks className="h-4 w-4 mr-2" />
+                        Edit Sections
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onTogglePublish(lesson.id, !lesson.is_published)}>
                         {lesson.is_published ? (
