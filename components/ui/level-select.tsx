@@ -22,21 +22,15 @@ export function LevelSelect({
 }: LevelSelectProps) {
     const loadLevels = async (search: string, page: number) => {
         try {
-            // Use the existing API to load levels
             const { api } = await import("@/lib/api/exports")
-            const levels = await api.levels.getAll(search)
-
-            // Simulate pagination by slicing the results
-            const startIndex = (page - 1) * 20
-            const endIndex = startIndex + 20
-            const paginatedLevels = levels.slice(startIndex, endIndex)
-
-            return {
-                items: paginatedLevels,
-                totalCount: levels.length,
+            const normalizedSearch = search.trim()
+            const response = await api.levels.getAll({
+                search: normalizedSearch.length > 0 ? normalizedSearch : undefined,
                 page,
-                pageSize: 20
-            }
+                pageSize: 20,
+            })
+
+            return response
         } catch (error) {
             console.error("Failed to load levels:", error)
             return { items: [], totalCount: 0, page: 1, pageSize: 20 }

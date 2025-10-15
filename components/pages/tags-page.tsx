@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { Hash, Pencil, Plus, RefreshCw, Search, Tag as TagIcon, Trash2 } from "lucide-react"
 
 import { api } from "@/lib/api/exports"
+import type { GraphqlListResult } from "@/lib/api/modules/content"
 import type { Tag } from "@/types/common"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
@@ -42,7 +43,13 @@ import {
 } from "@/components/ui/pagination"
 
 export function TagsPage() {
-  const [tags, setTags] = useState<Tag[]>([])
+  const ITEMS_PER_PAGE = 10
+  const [tagsData, setTagsData] = useState<GraphqlListResult<Tag>>(() => ({
+    items: [],
+    totalCount: 0,
+    page: 1,
+    pageSize: ITEMS_PER_PAGE,
+  }))
   const [isLoading, setIsLoading] = useState(true)
   const [showFormDialog, setShowFormDialog] = useState(false)
   const [selectedTag, setSelectedTag] = useState<Tag | null>(null)
@@ -51,14 +58,14 @@ export function TagsPage() {
 
   const { toast } = useToast()
   const { searchQuery, currentPage, updateSearchQuery, updatePage } = useSearchPagination()
-  const ITEMS_PER_PAGE = 10
 
-  const loadTags = useCallback(async (search?: string) => {
+  const loadTags = useCallback(async (search?: string, page = 1) => {
     setIsLoading(true)
     try {
-      const data = await api.tags.getAll(search)
-      const sorted = [...data].sort((a, b) => a.name.localeCompare(b.name))
-      setTags(sorted)
+      const normalizedSearch = search?.trim()
+      const response = await api.tags.getAll({ search: normalizedSearch, page, pageSize: ITEMS_PER_PAGE })
+      const sorted = [...response.items].sort((a, b) => a.name.localeCompare(b.name))
+      setTagsData({ ...response, items: sorted })
     } catch (error) {
       console.error("Failed to load tags", error)
       toast({
@@ -69,17 +76,17 @@ export function TagsPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [toast])
+  }, [ITEMS_PER_PAGE, toast])
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      loadTags(searchQuery.trim())
+      void loadTags(searchQuery.trim(), currentPage)
     }, 300)
 
     return () => {
       clearTimeout(handler)
     }
-  }, [loadTags, searchQuery])
+  }, [currentPage, loadTags, searchQuery])
 
   const handleDialogChange = (open: boolean) => {
     if (!open) {
@@ -98,32 +105,25 @@ export function TagsPage() {
     setShowFormDialog(true)
   }
 
-  const handleTagMutationSuccess = (mutatedTag: Tag) => {
-    setTags((previous) => {
-      const exists = previous.some((item) => item.id === mutatedTag.id)
-      const updated = exists
-        ? previous.map((item) => (item.id === mutatedTag.id ? mutatedTag : item))
-        : [...previous, mutatedTag]
-      return updated.sort((a, b) => a.name.localeCompare(b.name))
-    })
+  const handleTagMutationSuccess = (_mutatedTag: Tag) => {
+    void loadTags(searchQuery.trim(), currentPage)
   }
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(tags.length / ITEMS_PER_PAGE)), [tags.length])
-  const paginatedTags = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-    return tags.slice(startIndex, startIndex + ITEMS_PER_PAGE)
-  }, [currentPage, tags])
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(tagsData.totalCount / ITEMS_PER_PAGE)),
+    [ITEMS_PER_PAGE, tagsData.totalCount],
+  )
   const pageNumbers = useMemo(() => Array.from({ length: totalPages }, (_, index) => index + 1), [totalPages])
   const { startItem, endItem } = useMemo(() => {
-    if (tags.length === 0) {
+    if (tagsData.totalCount === 0) {
       return { startItem: 0, endItem: 0 }
     }
 
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE + 1
-    const endIndex = Math.min(currentPage * ITEMS_PER_PAGE, tags.length)
+    const startIndex = (tagsData.page - 1) * tagsData.pageSize + 1
+    const endIndex = Math.min(tagsData.page * tagsData.pageSize, tagsData.totalCount)
 
     return { startItem: startIndex, endItem: endIndex }
-  }, [currentPage, tags.length])
+  }, [tagsData.page, tagsData.pageSize, tagsData.totalCount])
 
   useEffect(() => {
     if (isLoading) return
@@ -144,7 +144,7 @@ export function TagsPage() {
         title: "Tag deleted",
         description: `\"${targetTag.name}\" has been removed from your directory.`,
       })
-      setTags((previous) => previous.filter((item) => item.id !== targetTag.id))
+      await loadTags(searchQuery.trim(), currentPage)
     } catch (error) {
       console.error("Failed to delete tag", error)
       toast({
@@ -166,7 +166,7 @@ export function TagsPage() {
             Use tags to add flexible metadata to courses, lessons and quizzes for discovery and automation.
           </p>
           <div className="text-xs text-muted-foreground">
-            Showing {tags.length} tags
+            Showing {tagsData.totalCount} tags
           </div>
         </div>
 
@@ -182,7 +182,7 @@ export function TagsPage() {
           </div>
           <Button
             variant="outline"
-            onClick={() => loadTags(searchQuery.trim())}
+            onClick={() => void loadTags(searchQuery.trim(), currentPage)}
             disabled={isLoading}
             className="whitespace-nowrap"
           >
@@ -210,7 +210,7 @@ export function TagsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{tags.length}</p>
+            <p className="text-3xl font-semibold">{tagsData.items.length}</p>
           </CardContent>
         </Card>
 
@@ -227,7 +227,7 @@ export function TagsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{new Set(tags.map((tag) => tag.slug)).size}</p>
+            <p className="text-3xl font-semibold">{new Set(tagsData.items.map((tag) => tag.slug)).size}</p>
           </CardContent>
         </Card>
 
@@ -244,7 +244,7 @@ export function TagsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{tags.length}</p>
+            <p className="text-3xl font-semibold">{tagsData.totalCount}</p>
           </CardContent>
         </Card>
       </div>
@@ -252,7 +252,7 @@ export function TagsPage() {
       <Card className="border-border/60">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-base font-semibold">Tag directory</CardTitle>
-          <Badge variant="outline">{tags.length} visible</Badge>
+          <Badge variant="outline">{tagsData.items.length} visible</Badge>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
@@ -267,7 +267,7 @@ export function TagsPage() {
                 </div>
               ))}
             </div>
-          ) : tags.length === 0 ? (
+          ) : tagsData.items.length === 0 ? (
             <div className="p-6">
               <Empty className="border border-dashed border-border/60">
                 <EmptyHeader>
@@ -280,7 +280,11 @@ export function TagsPage() {
                   </EmptyDescription>
                 </EmptyHeader>
                 <EmptyContent>
-                  <Button onClick={() => loadTags(searchQuery.trim())} variant="secondary" disabled={isLoading}>
+                  <Button
+                    onClick={() => void loadTags(searchQuery.trim(), currentPage)}
+                    variant="secondary"
+                    disabled={isLoading}
+                  >
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Reload tags
                   </Button>
@@ -298,7 +302,7 @@ export function TagsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedTags.map((tag) => (
+                  {tagsData.items.map((tag) => (
                     <TableRow key={tag.id} className="hover:bg-accent/40">
                       <TableCell className="font-medium flex items-center gap-2">
                         <Badge variant="secondary" className="h-6 w-6 shrink-0 items-center justify-center rounded-full p-0">
@@ -333,7 +337,7 @@ export function TagsPage() {
               </Table>
               <div className="flex flex-col gap-4 border-t border-border/60 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Showing {startItem}-{endItem} of {tags.length} tags
+                  Showing {startItem}-{endItem} of {tagsData.totalCount} tags
                 </p>
                 {totalPages > 1 && (
                   <Pagination>
@@ -392,7 +396,7 @@ export function TagsPage() {
         onOpenChange={handleDialogChange}
         tag={selectedTag ?? undefined}
         onSuccess={handleTagMutationSuccess}
-        existingSlugs={tags.map((tag) => tag.slug)}
+        existingSlugs={tagsData.items.map((tag) => tag.slug)}
       />
       <AlertDialog
         open={Boolean(tagToDelete)}

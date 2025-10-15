@@ -22,21 +22,15 @@ export function TagSelect({
 }: TagSelectProps) {
     const loadTags = async (search: string, page: number) => {
         try {
-            // Use the existing API to load tags
             const { api } = await import("@/lib/api/exports")
-            const tags = await api.tags.getAll(search)
-
-            // Simulate pagination by slicing the results
-            const startIndex = (page - 1) * 20
-            const endIndex = startIndex + 20
-            const paginatedTags = tags.slice(startIndex, endIndex)
-
-            return {
-                items: paginatedTags,
-                totalCount: tags.length,
+            const normalizedSearch = search.trim()
+            const response = await api.tags.getAll({
+                search: normalizedSearch.length > 0 ? normalizedSearch : undefined,
                 page,
-                pageSize: 20
-            }
+                pageSize: 20,
+            })
+
+            return response
         } catch (error) {
             console.error("Failed to load tags:", error)
             return { items: [], totalCount: 0, page: 1, pageSize: 20 }

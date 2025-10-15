@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { Pencil, Plus, RefreshCw, Search, Shapes, Trash2 } from "lucide-react"
 import { api } from "@/lib/api/exports"
+import type { GraphqlListResult } from "@/lib/api/modules/content"
 import type { Topic } from "@/types/common"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
@@ -33,7 +34,13 @@ import {
 } from "@/components/ui/pagination"
 
 export function TopicsPage() {
-  const [topics, setTopics] = useState<Topic[]>([])
+  const ITEMS_PER_PAGE = 9
+  const [topicsData, setTopicsData] = useState<GraphqlListResult<Topic>>(() => ({
+    items: [],
+    totalCount: 0,
+    page: 1,
+    pageSize: ITEMS_PER_PAGE,
+  }))
   const [isLoading, setIsLoading] = useState(true)
   const [showFormDialog, setShowFormDialog] = useState(false)
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null)
@@ -42,15 +49,15 @@ export function TopicsPage() {
 
   const { toast } = useToast()
   const { searchQuery, currentPage, updateSearchQuery, updatePage } = useSearchPagination()
-  const ITEMS_PER_PAGE = 9
 
-  const loadTopics = useCallback(async (search?: string) => {
+  const loadTopics = useCallback(async (search?: string, page = 1) => {
     setIsLoading(true)
 
     try {
-      const data = await api.topics.getAll(search)
-      const sorted = [...data].sort((a, b) => a.name.localeCompare(b.name))
-      setTopics(sorted)
+      const normalizedSearch = search?.trim()
+      const response = await api.topics.getAll({ search: normalizedSearch, page, pageSize: ITEMS_PER_PAGE })
+      const sorted = [...response.items].sort((a, b) => a.name.localeCompare(b.name))
+      setTopicsData({ ...response, items: sorted })
     } catch (error) {
       console.error("Failed to load topics", error)
       toast({
@@ -61,34 +68,33 @@ export function TopicsPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [toast])
+  }, [ITEMS_PER_PAGE, toast])
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      loadTopics(searchQuery.trim())
+      void loadTopics(searchQuery.trim(), currentPage)
     }, 300)
 
     return () => {
       clearTimeout(handler)
     }
-  }, [loadTopics, searchQuery])
+  }, [currentPage, loadTopics, searchQuery])
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(topics.length / ITEMS_PER_PAGE)), [topics.length])
-  const paginatedTopics = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-    return topics.slice(startIndex, startIndex + ITEMS_PER_PAGE)
-  }, [currentPage, topics])
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(topicsData.totalCount / ITEMS_PER_PAGE)),
+    [ITEMS_PER_PAGE, topicsData.totalCount],
+  )
   const pageNumbers = useMemo(() => Array.from({ length: totalPages }, (_, index) => index + 1), [totalPages])
   const { startItem, endItem } = useMemo(() => {
-    if (topics.length === 0) {
+    if (topicsData.totalCount === 0) {
       return { startItem: 0, endItem: 0 }
     }
 
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE + 1
-    const endIndex = Math.min(currentPage * ITEMS_PER_PAGE, topics.length)
+    const startIndex = (topicsData.page - 1) * topicsData.pageSize + 1
+    const endIndex = Math.min(topicsData.page * topicsData.pageSize, topicsData.totalCount)
 
     return { startItem: startIndex, endItem: endIndex }
-  }, [currentPage, topics.length])
+  }, [topicsData.page, topicsData.pageSize, topicsData.totalCount])
 
   useEffect(() => {
     if (isLoading) return
@@ -115,14 +121,8 @@ export function TopicsPage() {
     setShowFormDialog(true)
   }
 
-  const handleTopicMutationSuccess = (mutatedTopic: Topic) => {
-    setTopics((previous) => {
-      const exists = previous.some((item) => item.id === mutatedTopic.id)
-      const updated = exists
-        ? previous.map((item) => (item.id === mutatedTopic.id ? mutatedTopic : item))
-        : [...previous, mutatedTopic]
-      return updated.sort((a, b) => a.name.localeCompare(b.name))
-    })
+  const handleTopicMutationSuccess = (_mutatedTopic: Topic) => {
+    void loadTopics(searchQuery.trim(), currentPage)
   }
 
   const handleDeleteTopic = async () => {
@@ -136,7 +136,7 @@ export function TopicsPage() {
         title: "Topic deleted",
         description: `\"${targetTopic.name}\" has been removed from your catalogue.`,
       })
-      setTopics((previous) => previous.filter((item) => item.id !== targetTopic.id))
+      await loadTopics(searchQuery.trim(), currentPage)
     } catch (error) {
       console.error("Failed to delete topic", error)
       toast({
@@ -158,7 +158,7 @@ export function TopicsPage() {
             Organise your catalogue into meaningful subject areas to power filtering across the platform.
           </p>
           <div className="text-xs text-muted-foreground">
-            Showing {topics.length} topics
+            Showing {topicsData.totalCount} topics
           </div>
         </div>
 
@@ -174,7 +174,7 @@ export function TopicsPage() {
           </div>
           <Button
             variant="outline"
-            onClick={() => loadTopics(searchQuery.trim())}
+            onClick={() => void loadTopics(searchQuery.trim(), currentPage)}
             disabled={isLoading}
             className="whitespace-nowrap"
           >
@@ -208,7 +208,7 @@ export function TopicsPage() {
             </Card>
           ))}
         </div>
-      ) : topics.length === 0 ? (
+      ) : topicsData.items.length === 0 ? (
         <Empty className="border border-dashed border-border/60">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -220,7 +220,11 @@ export function TopicsPage() {
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Button onClick={() => loadTopics(searchQuery.trim())} variant="secondary" disabled={isLoading}>
+            <Button
+              onClick={() => void loadTopics(searchQuery.trim(), currentPage)}
+              variant="secondary"
+              disabled={isLoading}
+            >
               <RefreshCw className="mr-2 h-4 w-4" />
               Reload topics
             </Button>
@@ -229,7 +233,7 @@ export function TopicsPage() {
       ) : (
         <>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {paginatedTopics.map((topic) => (
+            {topicsData.items.map((topic) => (
               <Card key={topic.id} className="border-border/60 transition-shadow hover:shadow-lg">
                 <CardHeader className="space-y-4 pb-4">
                   <div className="flex items-start justify-between gap-3">
@@ -281,7 +285,7 @@ export function TopicsPage() {
           </div>
           <div className="mt-6 flex flex-col gap-4 border-t border-border/60 pt-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
-              Showing {startItem}-{endItem} of {topics.length} topics
+              Showing {startItem}-{endItem} of {topicsData.totalCount} topics
             </p>
             {totalPages > 1 && (
               <Pagination>

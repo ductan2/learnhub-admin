@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { ListOrdered, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react"
 import { api } from "@/lib/api/exports"
+import type { GraphqlListResult } from "@/lib/api/modules/content"
 import type { Level } from "@/types/common"
 import { useToast } from "@/hooks/use-toast"
 import { Input } from "@/components/ui/input"
@@ -41,7 +42,13 @@ import {
 } from "@/components/ui/pagination"
 
 export function LevelsPage() {
-  const [levels, setLevels] = useState<Level[]>([])
+  const ITEMS_PER_PAGE = 10
+  const [levelsData, setLevelsData] = useState<GraphqlListResult<Level>>(() => ({
+    items: [],
+    totalCount: 0,
+    page: 1,
+    pageSize: ITEMS_PER_PAGE,
+  }))
   const [isLoading, setIsLoading] = useState(true)
   const [showFormDialog, setShowFormDialog] = useState(false)
   const [selectedLevel, setSelectedLevel] = useState<Level | null>(null)
@@ -50,13 +57,13 @@ export function LevelsPage() {
 
   const { toast } = useToast()
   const { searchQuery, currentPage, updateSearchQuery, updatePage } = useSearchPagination()
-  const ITEMS_PER_PAGE = 10
 
-  const loadLevels = useCallback(async (search?: string) => {
+  const loadLevels = useCallback(async (search?: string, page = 1) => {
     setIsLoading(true)
     try {
-      const data = await api.levels.getAll(search)
-      setLevels(data)
+      const normalizedSearch = search?.trim()
+      const response = await api.levels.getAll({ search: normalizedSearch, page, pageSize: ITEMS_PER_PAGE })
+      setLevelsData(response)
     } catch (error) {
       console.error("Failed to load levels", error)
       toast({
@@ -67,34 +74,33 @@ export function LevelsPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [toast])
+  }, [ITEMS_PER_PAGE, toast])
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      loadLevels(searchQuery.trim())
+      void loadLevels(searchQuery.trim(), currentPage)
     }, 300)
 
     return () => {
       clearTimeout(handler)
     }
-  }, [loadLevels, searchQuery])
+  }, [currentPage, loadLevels, searchQuery])
 
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(levels.length / ITEMS_PER_PAGE)), [levels.length])
-  const paginatedLevels = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-    return levels.slice(startIndex, startIndex + ITEMS_PER_PAGE)
-  }, [currentPage, levels])
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(levelsData.totalCount / ITEMS_PER_PAGE)),
+    [ITEMS_PER_PAGE, levelsData.totalCount],
+  )
   const pageNumbers = useMemo(() => Array.from({ length: totalPages }, (_, index) => index + 1), [totalPages])
   const { startItem, endItem } = useMemo(() => {
-    if (levels.length === 0) {
+    if (levelsData.totalCount === 0) {
       return { startItem: 0, endItem: 0 }
     }
 
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE + 1
-    const endIndex = Math.min(currentPage * ITEMS_PER_PAGE, levels.length)
+    const startIndex = (levelsData.page - 1) * levelsData.pageSize + 1
+    const endIndex = Math.min(levelsData.page * levelsData.pageSize, levelsData.totalCount)
 
     return { startItem: startIndex, endItem: endIndex }
-  }, [currentPage, levels.length])
+  }, [levelsData.page, levelsData.pageSize, levelsData.totalCount])
 
   useEffect(() => {
     if (isLoading) return
@@ -121,14 +127,8 @@ export function LevelsPage() {
     setShowFormDialog(true)
   }
 
-  const handleLevelMutationSuccess = (mutatedLevel: Level) => {
-    setLevels((previous) => {
-      const exists = previous.some((item) => item.id === mutatedLevel.id)
-      const updated = exists
-        ? previous.map((item) => (item.id === mutatedLevel.id ? mutatedLevel : item))
-        : [...previous, mutatedLevel]
-      return updated
-    })
+  const handleLevelMutationSuccess = (_mutatedLevel: Level) => {
+    void loadLevels(searchQuery.trim(), currentPage)
   }
 
   const handleDeleteLevel = async () => {
@@ -142,7 +142,7 @@ export function LevelsPage() {
         title: "Level deleted",
         description: `\"${targetLevel.name}\" has been removed from the hierarchy.`,
       })
-      setLevels((previous) => previous.filter((item) => item.id !== targetLevel.id))
+      await loadLevels(searchQuery.trim(), currentPage)
     } catch (error) {
       console.error("Failed to delete level", error)
       toast({
@@ -164,7 +164,7 @@ export function LevelsPage() {
             Define learner progression and difficulty for courses, lessons and quizzes.
           </p>
           <div className="text-xs text-muted-foreground">
-            Showing {levels.length} levels
+            Showing {levelsData.totalCount} levels
           </div>
         </div>
 
@@ -180,7 +180,7 @@ export function LevelsPage() {
           </div>
           <Button
             variant="outline"
-            onClick={() => loadLevels(searchQuery.trim())}
+            onClick={() => void loadLevels(searchQuery.trim(), currentPage)}
             disabled={isLoading}
             className="whitespace-nowrap"
           >
@@ -197,7 +197,7 @@ export function LevelsPage() {
       <Card className="border-border/60">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-base font-semibold">Level hierarchy</CardTitle>
-          <Badge variant="outline">{levels.length} total</Badge>
+          <Badge variant="outline">{levelsData.totalCount} total</Badge>
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
@@ -212,7 +212,7 @@ export function LevelsPage() {
                 </div>
               ))}
             </div>
-          ) : levels.length === 0 ? (
+          ) : levelsData.items.length === 0 ? (
             <div className="p-6">
               <Empty className="border border-dashed border-border/60">
                 <EmptyHeader>
@@ -225,7 +225,11 @@ export function LevelsPage() {
                   </EmptyDescription>
                 </EmptyHeader>
                 <EmptyContent>
-                  <Button onClick={() => loadLevels(searchQuery.trim())} variant="secondary" disabled={isLoading}>
+                  <Button
+                    onClick={() => void loadLevels(searchQuery.trim(), currentPage)}
+                    variant="secondary"
+                    disabled={isLoading}
+                  >
                     <RefreshCw className="mr-2 h-4 w-4" />
                     Reload levels
                   </Button>
@@ -244,7 +248,7 @@ export function LevelsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedLevels.map((level) => (
+                  {levelsData.items.map((level) => (
                     <TableRow key={level.id} className="hover:bg-accent/40">
                       <TableCell>
                         <div className="flex items-center gap-3">
@@ -286,7 +290,7 @@ export function LevelsPage() {
               </Table>
               <div className="flex flex-col gap-4 border-t border-border/60 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Showing {startItem}-{endItem} of {levels.length} levels
+                  Showing {startItem}-{endItem} of {levelsData.totalCount} levels
                 </p>
                 {totalPages > 1 && (
                   <Pagination>

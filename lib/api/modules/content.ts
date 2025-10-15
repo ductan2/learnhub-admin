@@ -35,8 +35,21 @@ import {
 } from '@/lib/graphql/queries'
 import type { DocumentNode } from '@apollo/client'
 
+export type GraphqlListOptions = {
+  search?: string
+  page?: number
+  pageSize?: number
+}
+
+export type GraphqlListResult<TItem> = {
+  items: TItem[]
+  totalCount: number
+  page: number
+  pageSize: number
+}
+
 type GraphqlCrudModule<TItem, TCreate, TUpdate> = {
-  getAll: (search?: string) => Promise<TItem[]>
+  getAll: (options?: GraphqlListOptions) => Promise<GraphqlListResult<TItem>>
   create: (data: TCreate) => Promise<TItem>
   update: (id: string, data: TUpdate) => Promise<TItem>
   delete: (id: string) => Promise<void>
@@ -70,9 +83,19 @@ const createGraphqlCrudModule = <TItem, TCreate, TUpdate>(
   const refetchQueries = [{ query: listQuery }]
 
   return {
-    getAll: async (search?: string) => {
+    getAll: async (options?: GraphqlListOptions) => {
       try {
-        const variables = search && search.trim().length > 0 ? { search: search.trim() } : undefined
+        const search = options?.search?.trim()
+        const hasPagination = typeof options?.page === 'number' || typeof options?.pageSize === 'number'
+
+        const variables =
+          search || hasPagination
+            ? {
+                search: search && search.length > 0 ? search : undefined,
+                page: options?.page,
+                pageSize: options?.pageSize,
+              }
+            : undefined
         const { data } = await apolloClient.query({
           query: listQuery,
           variables,
@@ -88,6 +111,20 @@ const createGraphqlCrudModule = <TItem, TCreate, TUpdate>(
         } else if (response && typeof response === 'object' && 'items' in response) {
           // New format: object with items array
           items = (response as { items: unknown[] }).items
+          const totalCount = Number((response as { totalCount?: number }).totalCount) || items.length
+          const page = Number((response as { page?: number }).page) || options?.page || 1
+          const pageSize = Number((response as { pageSize?: number }).pageSize) || options?.pageSize || items.length
+
+          if (!Array.isArray(items)) {
+            throw new Error(`Missing ${listField} items field in response`)
+          }
+
+          return {
+            items: items as TItem[],
+            totalCount,
+            page,
+            pageSize,
+          }
         } else {
           throw new Error(`Invalid ${listField} field in response`)
         }
@@ -96,7 +133,16 @@ const createGraphqlCrudModule = <TItem, TCreate, TUpdate>(
           throw new Error(`Missing ${listField} items field in response`)
         }
 
-        return items as TItem[]
+        const totalCount = items.length
+        const page = options?.page ?? 1
+        const pageSize = options?.pageSize ?? items.length
+
+        return {
+          items: items as TItem[],
+          totalCount,
+          page,
+          pageSize,
+        }
       } catch (error) {
         console.error(`Failed to fetch ${resourceName}s from GraphQL:`, error)
         throw new Error(`Failed to fetch ${resourceName}s`)
