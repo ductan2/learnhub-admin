@@ -297,7 +297,7 @@ export function CoursesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCourses.map((course) => (
-            <Card key={course.id} className="hover:shadow-lg transition-shadow">
+            <Card key={course.id} className="hover:shadow-lg transition-shadow flex flex-col">
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
@@ -408,15 +408,28 @@ export function CoursesPage() {
                   <div className="text-sm text-muted-foreground">Duration: {course.duration_hours}h</div>
                 )}
               </CardContent>
-              <CardFooter className="flex gap-2">
-                <Button variant="outline" className="flex-1 bg-transparent" onClick={() => handleManageLessons(course)}>
-                  Manage Lessons
+              <CardFooter className="flex gap-2 mt-auto">
+                <Button
+                  variant="outline"
+                  className="flex-1 bg-transparent text-xs sm:text-sm"
+                  onClick={() => handleManageLessons(course)}
+                >
+                  <span className="hidden sm:inline">Manage Lessons</span>
+                  <span className="sm:hidden">Lessons</span>
                 </Button>
-                <Button variant="outline" className="flex-1" onClick={() => handleViewReviews(course)}>
+                <Button
+                  variant="outline"
+                  className="flex-1 text-xs sm:text-sm"
+                  onClick={() => handleViewReviews(course)}
+                >
                   Reviews
                 </Button>
-                <Button className="flex-1" onClick={() => handleEditCourse(course)}>
-                  Edit Course
+                <Button
+                  className="flex-1 text-xs sm:text-sm"
+                  onClick={() => handleEditCourse(course)}
+                >
+                  <span className="hidden sm:inline">Edit Course</span>
+                  <span className="sm:hidden">Edit</span>
                 </Button>
               </CardFooter>
             </Card>

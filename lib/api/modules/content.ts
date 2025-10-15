@@ -2,17 +2,19 @@ import type {
   Topic,
   Level,
   Tag,
-  MediaAsset,
-  MediaAssetCollection,
-  MediaAssetFilter,
-  MediaAssetOrder,
   CreateTopicDto,
   UpdateTopicDto,
   CreateLevelDto,
   UpdateLevelDto,
   CreateTagDto,
   UpdateTagDto
-} from '@/lib/types'
+} from '@/types/common'
+import type {
+  MediaAsset,
+  MediaAssetCollection,
+  MediaAssetFilter,
+  MediaAssetOrder
+} from '@/types/media'
 import { apolloClient } from '@/lib/graphql/client'
 import {
   GET_TOPICS,
@@ -76,10 +78,22 @@ const createGraphqlCrudModule = <TItem, TCreate, TUpdate>(
           variables,
           fetchPolicy: 'cache-first',
         })
-        const items = (data as Record<string, unknown>)[listField]
+        const response = (data as Record<string, unknown>)[listField]
+
+        // Handle both old format (direct array) and new format (object with items array)
+        let items: unknown[]
+        if (Array.isArray(response)) {
+          // Old format: direct array
+          items = response
+        } else if (response && typeof response === 'object' && 'items' in response) {
+          // New format: object with items array
+          items = (response as { items: unknown[] }).items
+        } else {
+          throw new Error(`Invalid ${listField} field in response`)
+        }
 
         if (!Array.isArray(items)) {
-          throw new Error(`Missing ${listField} field in response`)
+          throw new Error(`Missing ${listField} items field in response`)
         }
 
         return items as TItem[]

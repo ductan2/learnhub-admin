@@ -8,21 +8,19 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { TopicSelect } from "@/components/ui/topic-select"
+import { LevelSelect } from "@/components/ui/level-select"
 import type { Quiz, CreateQuizDto } from "@/types/quiz"
-import type { Topic, Level } from "@/types/common"
 
 interface QuizFormDialogProps {
   open: boolean
   onClose: () => void
   onSubmit: (data: CreateQuizDto) => void
   quiz?: Quiz | null
-  topics: Topic[]
-  levels: Level[]
 }
 
-export function QuizFormDialog({ open, onClose, onSubmit, quiz, topics, levels }: QuizFormDialogProps) {
+export function QuizFormDialog({ open, onClose, onSubmit, quiz }: QuizFormDialogProps) {
   const [formData, setFormData] = useState<CreateQuizDto>({
     title: "",
     description: "",
@@ -52,8 +50,8 @@ export function QuizFormDialog({ open, onClose, onSubmit, quiz, topics, levels }
       setFormData({
         title: "",
         description: "",
-        topic_id: topics[0]?.id || "",
-        level_id: levels[0]?.id || "",
+        topic_id: "",
+        level_id: "",
         time_limit: undefined,
         passing_score: undefined,
         shuffle_questions: false,
@@ -61,7 +59,7 @@ export function QuizFormDialog({ open, onClose, onSubmit, quiz, topics, levels }
         show_correct_answers: true,
       })
     }
-  }, [quiz, open, topics, levels])
+  }, [quiz, open])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -102,40 +100,20 @@ export function QuizFormDialog({ open, onClose, onSubmit, quiz, topics, levels }
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="topic">Topic *</Label>
-                <Select
+                <TopicSelect
                   value={formData.topic_id}
-                  onValueChange={(value) => setFormData({ ...formData, topic_id: value })}
-                >
-                  <SelectTrigger id="topic">
-                    <SelectValue placeholder="Select topic" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {topics.map((topic) => (
-                      <SelectItem key={topic.id} value={topic.id}>
-                        {topic.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(value) => setFormData({ ...formData, topic_id: value as string })}
+                  placeholder="Select topic"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="level">Level *</Label>
-                <Select
+                <LevelSelect
                   value={formData.level_id}
-                  onValueChange={(value) => setFormData({ ...formData, level_id: value })}
-                >
-                  <SelectTrigger id="level">
-                    <SelectValue placeholder="Select level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {levels.map((level) => (
-                      <SelectItem key={level.id} value={level.id}>
-                        {level.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(value) => setFormData({ ...formData, level_id: value as string })}
+                  placeholder="Select level"
+                />
               </div>
             </div>
 

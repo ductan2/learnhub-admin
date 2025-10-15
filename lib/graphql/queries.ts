@@ -131,12 +131,17 @@ export const DELETE_FOLDER = gql`
 
 // Topic queries and mutations
 export const GET_TOPICS = gql`
-  query GetTopics($search: String) {
-    topics(search: $search) {
-      id
-      slug
-      name
-      createdAt
+  query GetTopics($search: String, $page: Int, $pageSize: Int) {
+    topics(search: $search, page: $page, pageSize: $pageSize) {
+      items {
+        id
+        slug
+        name
+        createdAt
+      }
+      totalCount
+      page
+      pageSize
     }
   }
 `
@@ -171,11 +176,16 @@ export const DELETE_TOPIC = gql`
 
 // Level queries and mutations
 export const GET_LEVELS = gql`
-  query GetLevels($search: String) {
-    levels(search: $search) {
-      id
-      code
-      name
+  query GetLevels($search: String, $page: Int, $pageSize: Int) {
+    levels(search: $search, page: $page, pageSize: $pageSize) {
+      items {
+        id
+        code
+        name
+      }
+      totalCount
+      page
+      pageSize
     }
   }
 `
@@ -208,11 +218,16 @@ export const DELETE_LEVEL = gql`
 
 // Tag queries and mutations
 export const GET_TAGS = gql`
-  query GetTags($search: String) {
-    tags(search: $search) {
-      id
-      slug
-      name
+  query GetTags($search: String, $page: Int, $pageSize: Int) {
+    tags(search: $search, page: $page, pageSize: $pageSize) {
+      items {
+        id
+        slug
+        name
+      }
+      totalCount
+      page
+      pageSize
     }
   }
 `

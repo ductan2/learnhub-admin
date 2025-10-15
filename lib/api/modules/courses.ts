@@ -168,8 +168,11 @@ const buildCourseFilter = (filters?: CourseFilters) => {
 }
 
 const buildCreateCourseInput = (data: CreateCourseDto) => {
+  const user = localStorage.getItem('user')
+  const userID = user ? JSON.parse(user).id : null
   const input: Record<string, unknown> = {
     title: data.title,
+    instructorId: userID,
   }
 
   if (data.description?.trim()) {
@@ -182,10 +185,6 @@ const buildCreateCourseInput = (data: CreateCourseDto) => {
 
   if (data.level_id) {
     input.levelId = data.level_id
-  }
-
-  if (data.instructor_id) {
-    input.instructorId = data.instructor_id
   }
 
   if (data.thumbnail_url?.trim()) {

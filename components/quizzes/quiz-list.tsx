@@ -4,7 +4,8 @@ import { HelpCircle, Plus, Search, Eye, Edit, Trash2, Copy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { TopicSelect } from "@/components/ui/topic-select"
+import { LevelSelect } from "@/components/ui/level-select"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,8 +19,6 @@ import type { Topic, Level } from "@/types/common"
 
 interface QuizListProps {
   quizzes: Quiz[]
-  topics: Topic[]
-  levels: Level[]
   onCreateQuiz: () => void
   onEditQuiz: (quiz: Quiz) => void
   onDeleteQuiz: (quizId: string) => void
@@ -35,8 +34,6 @@ interface QuizListProps {
 
 export function QuizList({
   quizzes,
-  topics,
-  levels,
   onCreateQuiz,
   onEditQuiz,
   onDeleteQuiz,
@@ -64,33 +61,19 @@ export function QuizList({
             />
           </div>
 
-          <Select value={topicFilter} onValueChange={onTopicFilterChange}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="All Topics" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Topics</SelectItem>
-              {topics.map((topic) => (
-                <SelectItem key={topic.id} value={topic.id}>
-                  {topic.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <TopicSelect
+            value={topicFilter === "all" ? undefined : topicFilter}
+            onChange={(value) => onTopicFilterChange(Array.isArray(value) ? value[0] || "all" : value || "all")}
+            placeholder="All Topics"
+            className="w-40"
+          />
 
-          <Select value={levelFilter} onValueChange={onLevelFilterChange}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="All Levels" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Levels</SelectItem>
-              {levels.map((level) => (
-                <SelectItem key={level.id} value={level.id}>
-                  {level.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <LevelSelect
+            value={levelFilter === "all" ? undefined : levelFilter}
+            onChange={(value) => onLevelFilterChange(Array.isArray(value) ? value[0] || "all" : value || "all")}
+            placeholder="All Levels"
+            className="w-40"
+          />
         </div>
 
         <Button onClick={onCreateQuiz}>

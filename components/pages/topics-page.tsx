@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { Pencil, Plus, RefreshCw, Search, Shapes, Trash2 } from "lucide-react"
-
 import { api } from "@/lib/api/exports"
 import type { Topic } from "@/types/common"
 import { useToast } from "@/hooks/use-toast"

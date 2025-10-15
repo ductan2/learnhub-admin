@@ -9,6 +9,7 @@ import { AuthProvider } from "../lib/auth/auth-context"
 import "./globals.css"
 import ApolloProviderWrapper from "./ApolloProviderWrapper"
 import { Toaster } from "@/components/ui/toaster"
+import { Spinner } from "@/components/ui/spinner"
 
 export const metadata: Metadata = {
   title: "LMS Admin Dashboard",
@@ -28,7 +29,11 @@ export default function RootLayout({
           <AuthProvider>
             <QueryProvider>
               <Toaster />
-              <Suspense fallback={null}>{children}</Suspense>
+              <Suspense fallback={
+                <div className="min-h-screen flex items-center justify-center">
+                  <Spinner className="h-8 w-8" />
+                </div>
+              }>{children}</Suspense>
             </QueryProvider>
           </AuthProvider>
         </ApolloProviderWrapper>

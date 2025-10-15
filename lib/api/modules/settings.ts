@@ -1,4 +1,5 @@
 import { delay } from '../utils'
+import apiClient from '@/lib/api/client'
 import type {
     UserProfile,
     ChangePasswordDto,
@@ -62,85 +63,98 @@ export const settings = {
         }
     },
 
-    // Get user sessions
+    // Get user sessions (integrated with backend)
     getSessions: async (): Promise<SessionsResponse> => {
-        await delay(800) // Simulate API call
-
-        // Mock session data
-        const mockSessions: SessionsResponse = {
-            sessions: [
-                {
-                    id: 'session-1',
-                    device: 'MacBook Pro',
-                    browser: 'Chrome 120.0.0.0',
-                    ip_address: '192.168.1.100',
-                    location: 'San Francisco, CA, US',
-                    created_at: '2024-01-15T10:30:00Z',
-                    last_active: '2024-01-15T14:45:00Z',
-                    is_current: true,
-                    user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-                },
-                {
-                    id: 'session-2',
-                    device: 'iPhone 15 Pro',
-                    browser: 'Safari 17.2',
-                    ip_address: '192.168.1.101',
-                    location: 'San Francisco, CA, US',
-                    created_at: '2024-01-14T16:20:00Z',
-                    last_active: '2024-01-15T12:30:00Z',
-                    is_current: false,
-                    user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_2 like Mac OS X) AppleWebKit/605.1.15'
-                },
-                {
-                    id: 'session-3',
-                    device: 'Windows PC',
-                    browser: 'Firefox 121.0',
-                    ip_address: '203.0.113.45',
-                    location: 'New York, NY, US',
-                    created_at: '2024-01-13T09:15:00Z',
-                    last_active: '2024-01-14T18:45:00Z',
-                    is_current: false,
-                    user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0'
-                }
-            ],
-            last_login: {
-                date: '2024-01-15T14:45:00Z',
-                ip_address: '192.168.1.100',
-                device: 'MacBook Pro',
-                location: 'San Francisco, CA, US'
-            }
+        type BackendSession = {
+            id: string
+            created_at: string
+            expires_at?: string
+            ip_addr: string
+            is_current: boolean
+            user_agent: string
         }
 
-        return mockSessions
+        // Helper to extract basic device info from user agent
+        const extractDevice = (ua: string): { device: string; browser: string } => {
+            const lower = ua.toLowerCase()
+            let device = 'Unknown device'
+            if (lower.includes('iphone')) device = 'iPhone'
+            else if (lower.includes('ipad')) device = 'iPad'
+            else if (lower.includes('android')) device = 'Android'
+            else if (lower.includes('macintosh') || lower.includes('mac os')) device = 'Mac'
+            else if (lower.includes('windows')) device = 'Windows PC'
+            else if (lower.includes('linux')) device = 'Linux'
+
+            let browser = 'Unknown browser'
+            if (lower.includes('chrome') && !lower.includes('edge') && !lower.includes('edg/')) browser = 'Chrome'
+            else if (lower.includes('safari') && !lower.includes('chrome')) browser = 'Safari'
+            else if (lower.includes('firefox')) browser = 'Firefox'
+            else if (lower.includes('edg/')) browser = 'Edge'
+
+            return { device, browser }
+        }
+
+        const { data } = await apiClient.get<BackendSession[]>('/api/v1/sessions')
+
+        const sessions = (data || []).map((s) => {
+            const { device, browser } = extractDevice(s.user_agent || '')
+            return {
+                id: s.id,
+                device,
+                browser,
+                ip_address: s.ip_addr,
+                location: 'Unknown',
+                created_at: s.created_at,
+                last_active: s.created_at,
+                is_current: s.is_current,
+                user_agent: s.user_agent,
+            }
+        })
+
+        // Derive last login info from the newest session
+        const newest = sessions
+            .slice()
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+
+        return {
+            sessions,
+            last_login: newest
+                ? {
+                    date: newest.created_at,
+                    ip_address: newest.ip_address,
+                    device: newest.device,
+                    location: newest.location,
+                }
+                : {
+                    date: new Date().toISOString(),
+                    ip_address: '-',
+                    device: '-',
+                    location: '-',
+                },
+        }
     },
 
     // Terminate a specific session
     terminateSession: async (sessionId: string): Promise<TerminateSessionResponse> => {
-        await delay(1000) // Simulate API call
-
-        // Mock validation
         if (!sessionId) {
-            return {
-                status: 'error',
-                message: 'Session ID is required'
-            }
+            return { status: 'error', message: 'Session ID is required' }
         }
 
-        // Mock successful termination
-        return {
-            status: 'success',
-            message: 'Session terminated successfully'
+        try {
+            await apiClient.delete(`/api/v1/sessions/${sessionId}`)
+            return { status: 'success', message: 'Session terminated successfully' }
+        } catch (error) {
+            return { status: 'error', message: 'Failed to terminate session' }
         }
     },
 
     // Terminate all other sessions (except current)
     terminateAllSessions: async (): Promise<TerminateSessionResponse> => {
-        await delay(1200) // Simulate API call
-
-        // Mock successful termination
-        return {
-            status: 'success',
-            message: 'All other sessions terminated successfully'
+        try {
+            await apiClient.post('/api/v1/sessions/revoke-all')
+            return { status: 'success', message: 'All other sessions terminated successfully' }
+        } catch (error) {
+            return { status: 'error', message: 'Failed to terminate sessions' }
         }
     }
 }

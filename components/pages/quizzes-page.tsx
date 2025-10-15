@@ -6,7 +6,6 @@ import { QuizFormDialog } from "@/components/quizzes/quiz-form-dialog"
 import { QuizEditorDialog } from "@/components/quizzes/quiz-editor-dialog"
 import { api } from "@/lib/api/exports"
 import type { Quiz, CreateQuizDto, QuizQuestion, CreateQuestionDto } from "@/types/quiz"
-import type { Topic, Level } from "@/types/common"
 import { useToast } from "@/hooks/use-toast"
 import {
   AlertDialog,
@@ -22,8 +21,6 @@ import {
 export function QuizzesPage() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [filteredQuizzes, setFilteredQuizzes] = useState<Quiz[]>([])
-  const [topics, setTopics] = useState<Topic[]>([])
-  const [levels, setLevels] = useState<Level[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [topicFilter, setTopicFilter] = useState("all")
   const [levelFilter, setLevelFilter] = useState("all")
@@ -58,23 +55,6 @@ export function QuizzesPage() {
     [toast],
   )
 
-  const loadMetadata = useCallback(async () => {
-    try {
-      const [topicsData, levelsData] = await Promise.all([
-        api.topics.getAll(),
-        api.levels.getAll(),
-      ])
-      setTopics(topicsData)
-      setLevels(levelsData)
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load quiz filters",
-        variant: "destructive",
-      })
-    }
-  }, [toast])
-
   const filterQuizzes = useCallback(() => {
     let filtered = [...quizzes]
 
@@ -88,10 +68,6 @@ export function QuizzesPage() {
 
     setFilteredQuizzes(filtered)
   }, [quizzes, topicFilter, levelFilter])
-
-  useEffect(() => {
-    loadMetadata()
-  }, [loadMetadata])
 
   useEffect(() => {
     loadQuizzes(searchQuery)
@@ -163,7 +139,7 @@ export function QuizzesPage() {
 
   const handleDuplicateQuiz = async (quiz: Quiz) => {
     try {
-      await api.quizzes.duplicate(quiz.id)
+      await api.quizzes.duplicate()
       toast({
         title: "Success",
         description: "Quiz duplicated successfully",
@@ -255,7 +231,7 @@ export function QuizzesPage() {
         title: "Success",
         description: "Quiz questions saved successfully",
       })
-      await loadData()
+      await loadQuizzes()
     } catch (error) {
       console.error("Failed to save quiz questions", error)
       toast({
@@ -271,8 +247,6 @@ export function QuizzesPage() {
     <div className="p-6">
       <QuizList
         quizzes={filteredQuizzes}
-        topics={topics}
-        levels={levels}
         onCreateQuiz={() => setFormDialog({ open: true, quiz: null })}
         onEditQuiz={(quiz) => setEditorDialog({ open: true, quiz })}
         onDeleteQuiz={(quizId) => setDeleteDialog({ open: true, quizId })}
@@ -291,8 +265,6 @@ export function QuizzesPage() {
         onClose={() => setFormDialog({ open: false, quiz: null })}
         onSubmit={formDialog.quiz ? handleUpdateQuiz : handleCreateQuiz}
         quiz={formDialog.quiz}
-        topics={topics}
-        levels={levels}
       />
 
       <QuizEditorDialog
