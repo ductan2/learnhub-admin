@@ -1123,3 +1123,133 @@ export const DELETE_LESSON_SECTION = gql`
     deleteLessonSection(id: $id)
   }
 `
+
+// Flashcard queries and mutations
+export const GET_FLASHCARD_SET = gql`
+  query GetFlashcardSet($id: ID!) {
+    flashcardSet(id: $id) {
+      id
+      title
+      description
+      topicId
+      levelId
+      createdAt
+      createdBy
+      tags {
+        id
+        slug
+        name
+      }
+      cards {
+        id
+        setId
+        ord
+      }
+    }
+  }
+`
+
+export const GET_FLASHCARD_SETS = gql`
+  query GetFlashcardSets(
+    $filter: FlashcardSetFilterInput
+    $page: Int
+    $pageSize: Int
+    $orderBy: FlashcardSetOrderInput
+  ) {
+    flashcardSets(filter: $filter, page: $page, pageSize: $pageSize, orderBy: $orderBy) {
+      items {
+        id
+        title
+        description
+        topicId
+        levelId
+        createdAt
+        createdBy
+        tags {
+          id
+          slug
+          name
+        }
+        cards {
+          id
+          ord
+        }
+      }
+      totalCount
+      page
+      pageSize
+    }
+  }
+`
+
+export const GET_FLASHCARDS = gql`
+  query GetFlashcards(
+    $setId: ID!
+    $filter: FlashcardFilterInput
+    $page: Int
+    $pageSize: Int
+    $orderBy: FlashcardOrderInput
+  ) {
+    flashcards(
+      setId: $setId
+      filter: $filter
+      page: $page
+      pageSize: $pageSize
+      orderBy: $orderBy
+    ) {
+      items {
+        id
+        setId
+        frontText
+        backText
+        frontMediaId
+        backMediaId
+        ord
+        hints
+        createdAt
+      }
+      totalCount
+      page
+      pageSize
+    }
+  }
+`
+
+export const CREATE_FLASHCARD_SET = gql`
+  mutation CreateFlashcardSet($input: CreateFlashcardSetInput!) {
+    createFlashcardSet(input: $input) {
+      id
+      title
+      description
+      topicId
+      levelId
+      createdAt
+      createdBy
+      tags {
+        id
+        slug
+        name
+      }
+      cards {
+        id
+        ord
+      }
+    }
+  }
+`
+
+export const ADD_FLASHCARD = gql`
+  mutation AddFlashcard($input: AddFlashcardInput!) {
+    addFlashcard(input: $input) {
+      id
+      setId
+      frontText
+      backText
+      frontMediaId
+      backMediaId
+      ord
+      hints
+      createdAt
+    }
+  }
+`

@@ -12,6 +12,7 @@ import {
   Shapes,
   ListOrdered,
   Tags,
+  Layers,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -30,6 +31,7 @@ export const adminNavigation: AdminNavItem[] = [
   { id: "topics", name: "Topics", href: "/topics", icon: Shapes },
   { id: "levels", name: "Levels", href: "/levels", icon: ListOrdered },
   { id: "tags", name: "Tags", href: "/tags", icon: Tags },
+  { id: "flashcards", name: "Flashcards", href: "/flashcards", icon: Layers },
   { id: "quizzes", name: "Quizzes", href: "/quizzes", icon: HelpCircle },
   { id: "submissions", name: "Submissions", href: "/submissions", icon: FileCheck },
   { id: "users", name: "Users", href: "/users", icon: Users },

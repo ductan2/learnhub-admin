@@ -13,6 +13,7 @@ import { courses } from './modules/courses'
 import { notifications } from './modules/notifications'
 import { submissions } from './modules/submissions'
 import { settings } from './modules/settings'
+import { flashcards } from './modules/flashcards'
 
 export const api = {
   users,
@@ -32,4 +33,5 @@ export const api = {
   notifications,
   submissions,
   settings,
+  flashcards,
 }
