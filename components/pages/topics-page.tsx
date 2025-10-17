@@ -73,7 +73,7 @@ export function TopicsPage() {
   useEffect(() => {
     const handler = setTimeout(() => {
       void loadTopics(searchQuery.trim(), currentPage)
-    }, 300)
+    }, 500)
 
     return () => {
       clearTimeout(handler)

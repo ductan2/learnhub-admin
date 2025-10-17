@@ -25,6 +25,8 @@ import type {
   FlashcardSetOrderInput,
   FlashcardFilterInput,
   FlashcardOrderInput,
+} from '@/content_schema'
+import {
   OrderDirection,
   FlashcardSetOrderField,
   FlashcardOrderField,
@@ -55,7 +57,9 @@ const mapFlashcardSet = (set: GraphqlFlashcardSet): FlashcardSet => ({
   title: set.title,
   description: set.description ?? undefined,
   topicId: set.topicId ?? undefined,
+  topic: set.topic ?? undefined,
   levelId: set.levelId ?? undefined,
+  level: set.level ?? undefined,
   createdAt: set.createdAt,
   createdBy: set.createdBy ?? undefined,
   tags: Array.isArray(set.tags) ? set.tags.map(mapTag) : [],

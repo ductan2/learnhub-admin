@@ -1162,7 +1162,15 @@ export const GET_FLASHCARD_SETS = gql`
         title
         description
         topicId
+        topic {
+          id
+          name
+        }
         levelId
+        level {
+          id
+          name
+        }
         createdAt
         createdBy
         tags {

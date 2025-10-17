@@ -79,7 +79,7 @@ export function LevelsPage() {
   useEffect(() => {
     const handler = setTimeout(() => {
       void loadLevels(searchQuery.trim(), currentPage)
-    }, 300)
+    }, 500)
 
     return () => {
       clearTimeout(handler)

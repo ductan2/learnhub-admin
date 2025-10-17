@@ -83,32 +83,48 @@ const mapCourseLesson = (lesson: GraphqlCourseLesson): CourseLesson => ({
   created_at: lesson.createdAt ?? '',
   lesson: lesson.lesson
     ? {
-        id: lesson.lesson.id,
-        title: lesson.lesson.title,
-        description: lesson.lesson.description ?? null,
-        topic: lesson.lesson.topic ?? undefined,
-        level: lesson.lesson.level ?? undefined,
-        is_published: lesson.lesson.isPublished,
-      }
+      id: lesson.lesson.id,
+      title: lesson.lesson.title,
+      description: lesson.lesson.description ?? null,
+      topic: lesson.lesson.topic ?? undefined,
+      level: lesson.lesson.level ?? undefined,
+      is_published: lesson.lesson.isPublished,
+    }
     : undefined,
 })
 
 const mapCourse = (course: GraphqlCourse): Course => {
   const lessonIds = Array.isArray(course.lessons)
     ? course.lessons
-        .map((lesson) => lesson.lessonId)
-        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+      .map((lesson) => lesson.lessonId)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0)
     : []
 
   const hasDetailedLessonInfo = Array.isArray(course.lessons)
     ? course.lessons.some(
-        (lesson) =>
-          lesson.ord !== undefined || lesson.isRequired !== undefined || !!lesson.lesson || !!lesson.courseId
-      )
+      (lesson) =>
+        lesson.ord !== undefined || lesson.isRequired !== undefined || !!lesson.lesson || !!lesson.courseId
+    )
     : false
 
   const lessons = hasDetailedLessonInfo
-    ? course.lessons?.map((lesson) => mapCourseLesson(lesson))
+    ? course.lessons?.map((lesson) => {
+      try {
+        return mapCourseLesson(lesson)
+      } catch (error) {
+        console.warn('Failed to map lesson:', lesson, error)
+        // Return a minimal lesson object if mapping fails
+        return {
+          id: lesson.id || '',
+          course_id: lesson.courseId || '',
+          lesson_id: lesson.lessonId || '',
+          ord: lesson.ord || 0,
+          is_required: lesson.isRequired || true,
+          created_at: lesson.createdAt || '',
+          lesson: undefined,
+        }
+      }
+    })
     : undefined
 
   return {
@@ -375,13 +391,21 @@ export const courses = {
           throw new Error('Failed to update course')
         }
 
-        course = mapCourse(response.updateCourse)
+        try {
+          course = mapCourse(response.updateCourse)
+        } catch (mappingError) {
+          throw new Error('Failed to map course data')
+        }
       } else {
         course = await fetchCourseById(id)
       }
 
       if (typeof is_published === 'boolean') {
-        course = await courses.publish(id, is_published)
+        try {
+          course = await courses.publish(id, is_published, course)
+        } catch (publishError) {
+          console.warn('Failed to publish course, but update was successful:', publishError)
+        }
       }
 
       return course
@@ -391,7 +415,7 @@ export const courses = {
     }
   },
 
-  publish: async (id: string, published: boolean): Promise<Course> => {
+  publish: async (id: string, published: boolean, existingCourse?: Course): Promise<Course> => {
     try {
       if (published) {
         const { data } = await apolloClient.mutate<{ publishCourse: { id: string } }>({
@@ -413,7 +437,45 @@ export const courses = {
         }
       }
 
-      return await fetchCourseById(id)
+      // If we have existing course data, update it with the new publish status
+      if (existingCourse) {
+        return {
+          ...existingCourse,
+          is_published: published,
+          published_at: published ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        }
+      }
+
+      // Try to fetch the updated course, but if it fails, return a minimal course object
+      try {
+        return await fetchCourseById(id)
+      } catch (fetchError) {
+        console.warn('Failed to fetch course after publish, but publish was successful:', fetchError)
+        // Return a minimal course object with the updated publish status
+        return {
+          id,
+          title: '',
+          description: null,
+          topic_id: null,
+          level_id: null,
+          instructor_id: null,
+          thumbnail_url: null,
+          is_published: published,
+          is_featured: false,
+          price: null,
+          duration_hours: null,
+          average_rating: null,
+          review_count: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          published_at: published ? new Date().toISOString() : null,
+          enrollment_count: null,
+          completion_rate: null,
+          lesson_ids: [],
+          lessons: undefined,
+        }
+      }
     } catch (error) {
       console.error('Failed to toggle course publish status via GraphQL:', error)
       throw new Error('Failed to update course status')

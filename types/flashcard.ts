@@ -15,7 +15,9 @@ export interface FlashcardSet {
   title: string
   description?: string
   topicId?: string
+  topic?: import('./common').Topic
   levelId?: string
+  level?: import('./common').Level
   createdAt: string
   createdBy?: string
   tags: import('./common').Tag[]

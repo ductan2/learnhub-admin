@@ -165,7 +165,9 @@ export interface FlashcardSet {
   title: string;
   description?: string;
   topicId?: string;
+  topic?: Topic;
   levelId?: string;
+  level?: Level;
   createdAt: string;
   createdBy?: string;
   tags: Tag[];

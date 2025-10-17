@@ -81,7 +81,7 @@ export function TagsPage() {
   useEffect(() => {
     const handler = setTimeout(() => {
       void loadTags(searchQuery.trim(), currentPage)
-    }, 300)
+    }, 500)
 
     return () => {
       clearTimeout(handler)

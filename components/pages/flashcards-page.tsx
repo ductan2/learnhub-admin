@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Layers, Plus, RefreshCw, Search } from "lucide-react"
+import { Layers, Plus, RefreshCw, Search, BookOpen, CreditCard, FileText } from "lucide-react"
 
 import { api } from "@/lib/api/exports"
 import type { GraphqlListResult } from "@/lib/api/modules/content"
@@ -378,23 +378,30 @@ export function FlashcardsPage() {
       />
 
       <Sheet open={isDetailOpen} onOpenChange={handleSheetChange}>
-        <SheetContent side="right" className="sm:max-w-xl">
+        <SheetContent side="right" className="sm:max-w-2xl">
           <SheetHeader>
-            <SheetTitle>{selectedSet?.title ?? "Flashcard set"}</SheetTitle>
-            <SheetDescription>
-              {selectedSet?.description
-                ? selectedSet.description
-                : "Review the cards inside this set and add new content."}
-            </SheetDescription>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                <BookOpen className="h-5 w-5" />
+              </div>
+              <div>
+                <SheetTitle className="text-left">{selectedSet?.title ?? "Flashcard set"}</SheetTitle>
+                <SheetDescription className="text-left">
+                  {selectedSet?.description
+                    ? selectedSet.description
+                    : "Review the cards inside this set and add new content."}
+                </SheetDescription>
+              </div>
+            </div>
           </SheetHeader>
 
           {selectedSet ? (
             <div className="flex h-full flex-col gap-6 px-4 pb-6">
               <div className="space-y-4 rounded-lg border border-border/60 p-4">
                 <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                  <span>Topic: {selectedSet.topicId ? selectedSet.topicId : "—"}</span>
+                  <span>Topic: {selectedSet.topic?.name || "—"}</span>
                   <span className="before:mx-2 before:text-muted-foreground before:content-['•']">
-                    Level: {selectedSet.levelId ? selectedSet.levelId : "—"}
+                    Level: {selectedSet.level?.name || "—"}
                   </span>
                   <span className="before:mx-2 before:text-muted-foreground before:content-['•']">
                     Created {new Date(selectedSet.createdAt).toLocaleDateString()}
@@ -414,11 +421,16 @@ export function FlashcardsPage() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-base font-semibold">Cards</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {cardsData.totalCount} card{cardsData.totalCount === 1 ? "" : "s"} in this set.
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100 text-green-600">
+                      <CreditCard className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-semibold">Individual Cards</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {cardsData.totalCount} card{cardsData.totalCount === 1 ? "" : "s"} in this set.
+                      </p>
+                    </div>
                   </div>
                   <Button size="sm" onClick={() => setShowAddCardDialog(true)}>
                     <Plus className="mr-2 h-4 w-4" />
@@ -444,27 +456,57 @@ export function FlashcardsPage() {
                   <ScrollArea className="h-[60vh] pr-4">
                     <div className="space-y-4">
                       {cardsData.items.map((card, index) => (
-                        <div key={card.id} className="space-y-4 rounded-lg border border-border/60 p-4">
-                          <div className="flex items-center justify-between text-sm text-muted-foreground">
-                            <span>Card {index + 1}</span>
-                            <span>Order: {card.ord}</span>
+                        <div key={card.id} className="space-y-4 rounded-lg border border-green-200 bg-green-50/30 p-4 shadow-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-600">
+                                <FileText className="h-3 w-3" />
+                              </div>
+                              <span className="text-sm font-medium text-green-800">Card {index + 1}</span>
+                            </div>
+                            <Badge variant="outline" className="text-xs">
+                              Order: {card.ord}
+                            </Badge>
                           </div>
-                          <div className="space-y-2">
-                            <p className="text-xs font-semibold uppercase text-muted-foreground">Front</p>
-                            <p className="text-sm whitespace-pre-line">{card.frontText}</p>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                                <p className="text-xs font-semibold uppercase text-blue-600">Front Side</p>
+                              </div>
+                              <div className="rounded-md border border-blue-200 bg-blue-50/50 p-3">
+                                <p className="text-sm whitespace-pre-line">{card.frontText}</p>
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full bg-purple-500"></div>
+                                <p className="text-xs font-semibold uppercase text-purple-600">Back Side</p>
+                              </div>
+                              <div className="rounded-md border border-purple-200 bg-purple-50/50 p-3">
+                                <p className="text-sm whitespace-pre-line">{card.backText}</p>
+                              </div>
+                            </div>
                           </div>
-                          <div className="space-y-2">
-                            <p className="text-xs font-semibold uppercase text-muted-foreground">Back</p>
-                            <p className="text-sm whitespace-pre-line">{card.backText}</p>
-                          </div>
+
                           {card.hints && card.hints.length > 0 ? (
                             <div className="space-y-2">
-                              <p className="text-xs font-semibold uppercase text-muted-foreground">Hints</p>
-                              <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                                {card.hints.map((hint, hintIndex) => (
-                                  <li key={`${card.id}-hint-${hintIndex}`}>{hint}</li>
-                                ))}
-                              </ul>
+                              <div className="flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full bg-orange-500"></div>
+                                <p className="text-xs font-semibold uppercase text-orange-600">Learning Hints</p>
+                              </div>
+                              <div className="rounded-md border border-orange-200 bg-orange-50/50 p-3">
+                                <ul className="space-y-1 text-sm">
+                                  {card.hints.map((hint, hintIndex) => (
+                                    <li key={`${card.id}-hint-${hintIndex}`} className="flex items-start gap-2">
+                                      <span className="text-orange-500 mt-1">•</span>
+                                      <span>{hint}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
                             </div>
                           ) : null}
                         </div>
@@ -472,15 +514,19 @@ export function FlashcardsPage() {
                     </div>
                   </ScrollArea>
                 ) : (
-                  <div className="flex h-full flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border/70 p-6 text-center">
-                    <Layers className="h-5 w-5 text-muted-foreground" />
-                    <p className="text-sm font-medium">No cards yet</p>
-                    <p className="text-sm text-muted-foreground">
-                      Add your first flashcard to start building this set.
-                    </p>
-                    <Button size="sm" onClick={() => setShowAddCardDialog(true)}>
+                  <div className="flex h-full flex-col items-center justify-center gap-4 rounded-lg border border-dashed border-green-300 bg-green-50/30 p-8 text-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+                      <CreditCard className="h-8 w-8 text-green-600" />
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-base font-semibold text-green-800">No flashcards yet</p>
+                      <p className="text-sm text-green-600 max-w-xs">
+                        Start building your flashcard collection by adding individual cards to this set.
+                      </p>
+                    </div>
+                    <Button size="sm" onClick={() => setShowAddCardDialog(true)} className="bg-green-600 hover:bg-green-700">
                       <Plus className="mr-2 h-4 w-4" />
-                      Add card
+                      Add your first card
                     </Button>
                   </div>
                 )}

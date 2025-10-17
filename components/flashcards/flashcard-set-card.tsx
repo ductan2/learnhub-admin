@@ -27,8 +27,8 @@ export function FlashcardSetCard({ flashcardSet, onOpen }: FlashcardSetCardProps
         </div>
 
         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-          <span>Topic: {flashcardSet.topicId ? flashcardSet.topicId : "—"}</span>
-          <span className="before:mx-1 before:content-['•']">Level: {flashcardSet.levelId ? flashcardSet.levelId : "—"}</span>
+          <span>Topic: {flashcardSet.topic?.name || "—"}</span>
+          <span className="before:mx-1 before:content-['•']">Level: {flashcardSet.level?.name || "—"}</span>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
