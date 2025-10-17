@@ -412,6 +412,13 @@ export interface CreateFlashcardSetInput {
   createdBy?: string;
 }
 
+export interface UpdateFlashcardSetInput {
+  title?: string;
+  description?: string | null;
+  topicId?: string | null;
+  levelId?: string | null;
+}
+
 export interface FlashcardSetFilterInput {
   topicId?: string;
   levelId?: string;
@@ -431,6 +438,16 @@ export interface AddFlashcardInput {
   frontMediaId?: string;
   backMediaId?: string;
   hints?: string[];
+}
+
+export interface UpdateFlashcardInput {
+  setId?: string;
+  frontText?: string;
+  backText?: string;
+  frontMediaId?: string | null;
+  backMediaId?: string | null;
+  hints?: (string | null)[] | null;
+  ord?: number;
 }
 
 export interface FlashcardFilterInput {
@@ -554,6 +571,24 @@ export interface GetFlashcardsVariables {
   page?: number;
   pageSize?: number;
   orderBy?: FlashcardOrderInput;
+}
+
+export interface UpdateFlashcardSetVariables {
+  id: string;
+  input: UpdateFlashcardSetInput;
+}
+
+export interface DeleteFlashcardSetVariables {
+  id: string;
+}
+
+export interface UpdateFlashcardVariables {
+  id: string;
+  input: UpdateFlashcardInput;
+}
+
+export interface DeleteFlashcardVariables {
+  id: string;
 }
 
 // ============================================
@@ -856,6 +891,22 @@ export interface CreateFlashcardSetResponse {
 
 export interface AddFlashcardResponse {
   addFlashcard: Flashcard;
+}
+
+export interface UpdateFlashcardSetResponse {
+  updateFlashcardSet: FlashcardSet;
+}
+
+export interface DeleteFlashcardSetResponse {
+  deleteFlashcardSet: boolean;
+}
+
+export interface UpdateFlashcardResponse {
+  updateFlashcard: Flashcard;
+}
+
+export interface DeleteFlashcardResponse {
+  deleteFlashcard: boolean;
 }
 
 export interface CreateQuizResponse {
