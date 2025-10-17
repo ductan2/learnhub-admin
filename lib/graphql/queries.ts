@@ -1246,6 +1246,35 @@ export const CREATE_FLASHCARD_SET = gql`
   }
 `
 
+export const UPDATE_FLASHCARD_SET = gql`
+  mutation UpdateFlashcardSet($id: ID!, $input: UpdateFlashcardSetInput!) {
+    updateFlashcardSet(id: $id, input: $input) {
+      id
+      title
+      description
+      topicId
+      levelId
+      createdAt
+      createdBy
+      tags {
+        id
+        slug
+        name
+      }
+      cards {
+        id
+        ord
+      }
+    }
+  }
+`
+
+export const DELETE_FLASHCARD_SET = gql`
+  mutation DeleteFlashcardSet($id: ID!) {
+    deleteFlashcardSet(id: $id)
+  }
+`
+
 export const ADD_FLASHCARD = gql`
   mutation AddFlashcard($input: AddFlashcardInput!) {
     addFlashcard(input: $input) {
@@ -1259,5 +1288,27 @@ export const ADD_FLASHCARD = gql`
       hints
       createdAt
     }
+  }
+`
+
+export const UPDATE_FLASHCARD = gql`
+  mutation UpdateFlashcard($id: ID!, $input: UpdateFlashcardInput!) {
+    updateFlashcard(id: $id, input: $input) {
+      id
+      setId
+      frontText
+      backText
+      frontMediaId
+      backMediaId
+      ord
+      hints
+      createdAt
+    }
+  }
+`
+
+export const DELETE_FLASHCARD = gql`
+  mutation DeleteFlashcard($id: ID!) {
+    deleteFlashcard(id: $id)
   }
 `

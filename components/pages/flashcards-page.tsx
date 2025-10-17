@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Layers, Plus, RefreshCw, Search, BookOpen, CreditCard, FileText } from "lucide-react"
+import { Layers, Plus, RefreshCw, Search, BookOpen, CreditCard, FileText, Pencil, Trash2, Loader2 } from "lucide-react"
 
 import { api } from "@/lib/api/exports"
 import type { GraphqlListResult } from "@/lib/api/modules/content"
@@ -34,6 +34,16 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const ITEMS_PER_PAGE = 9
 const CARDS_PAGE_SIZE = 100
@@ -65,6 +75,14 @@ export function FlashcardsPage() {
   const [cardsData, setCardsData] = useState<GraphqlListResult<Flashcard>>(createEmptyCardsState)
   const [isLoadingCards, setIsLoadingCards] = useState(false)
   const [showAddCardDialog, setShowAddCardDialog] = useState(false)
+  const [showEditSetDialog, setShowEditSetDialog] = useState(false)
+  const [showEditCardDialog, setShowEditCardDialog] = useState(false)
+  const [cardBeingEdited, setCardBeingEdited] = useState<Flashcard | null>(null)
+  const [showDeleteSetDialog, setShowDeleteSetDialog] = useState(false)
+  const [isDeletingSet, setIsDeletingSet] = useState(false)
+  const [cardPendingDeletion, setCardPendingDeletion] = useState<Flashcard | null>(null)
+  const [showDeleteCardDialog, setShowDeleteCardDialog] = useState(false)
+  const [isDeletingCard, setIsDeletingCard] = useState(false)
 
   const loadSets = useCallback(
     async (search?: string, page = 1) => {
@@ -149,9 +167,17 @@ export function FlashcardsPage() {
 
   const handleOpenSet = useCallback(
     (flashcardSet: FlashcardSet) => {
+      setShowEditSetDialog(false)
+      setShowEditCardDialog(false)
+      setShowAddCardDialog(false)
+      setCardBeingEdited(null)
+      setShowDeleteSetDialog(false)
+      setShowDeleteCardDialog(false)
+      setCardPendingDeletion(null)
+      setIsDeletingCard(false)
+      setIsDeletingSet(false)
       setSelectedSet(flashcardSet)
       setIsDetailOpen(true)
-      setShowAddCardDialog(false)
 
       void (async () => {
         try {
@@ -186,6 +212,106 @@ export function FlashcardsPage() {
     },
     [currentPage, handleOpenSet, loadSets, searchQuery, toast],
   )
+
+  const handleUpdateSet = useCallback(
+    async (values: CreateFlashcardSetDto) => {
+      if (!selectedSet) {
+        return
+      }
+
+      try {
+        const updated = await api.flashcards.updateSet(selectedSet.id, {
+          title: values.title,
+          description: values.description ?? null,
+          topicId: values.topicId ?? null,
+          levelId: values.levelId ?? null,
+        })
+
+        setSetsData((previous) => ({
+          ...previous,
+          items: previous.items.map((item) =>
+            item.id === updated.id
+              ? {
+                  ...item,
+                  ...updated,
+                  topic: updated.topic ?? item.topic,
+                  level: updated.level ?? item.level,
+                  cardCount: updated.cardCount ?? item.cardCount,
+                }
+              : item,
+          ),
+        }))
+
+        setSelectedSet((previous) => {
+          if (!previous || previous.id !== updated.id) {
+            return previous
+          }
+
+          return {
+            ...previous,
+            ...updated,
+            topic: updated.topic ?? previous.topic,
+            level: updated.level ?? previous.level,
+          }
+        })
+
+        toast({
+          title: "Flashcard set updated",
+          description: `Updates to "${updated.title}" have been saved.`,
+        })
+
+        void loadSets(searchQuery, currentPage)
+      } catch (error) {
+        console.error("Failed to update flashcard set", error)
+        throw error
+      }
+    },
+    [currentPage, loadSets, searchQuery, selectedSet, toast],
+  )
+
+  const handleDeleteSet = useCallback(async () => {
+    if (!selectedSet) {
+      return
+    }
+
+    const setId = selectedSet.id
+    const setTitle = selectedSet.title
+
+    try {
+      setIsDeletingSet(true)
+      const deleted = await api.flashcards.deleteSet(setId)
+      if (!deleted) {
+        throw new Error("Delete flashcard set returned false")
+      }
+
+      toast({
+        title: "Flashcard set deleted",
+        description: `"${setTitle}" has been removed.`,
+      })
+
+      setShowDeleteSetDialog(false)
+      setShowEditSetDialog(false)
+      setShowEditCardDialog(false)
+      setShowAddCardDialog(false)
+      setCardBeingEdited(null)
+      setCardPendingDeletion(null)
+      setShowDeleteCardDialog(false)
+      setSelectedSet(null)
+      setCardsData(createEmptyCardsState())
+      setIsDetailOpen(false)
+
+      await loadSets(searchQuery, currentPage)
+    } catch (error) {
+      console.error("Failed to delete flashcard set", error)
+      toast({
+        title: "Unable to delete flashcard set",
+        description: "We couldn't delete this set. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeletingSet(false)
+    }
+  }, [currentPage, loadSets, searchQuery, selectedSet, toast])
 
   const handleAddCard = useCallback(
     async (values: { frontText: string; backText: string; hints?: string[] }) => {
@@ -225,11 +351,110 @@ export function FlashcardsPage() {
     [currentPage, loadCards, loadSets, searchQuery, selectedSet, toast],
   )
 
+  const handleUpdateCard = useCallback(
+    async (values: { frontText: string; backText: string; hints?: string[] }) => {
+      if (!cardBeingEdited) {
+        return
+      }
+
+      try {
+        const updated = await api.flashcards.updateCard(cardBeingEdited.id, {
+          frontText: values.frontText,
+          backText: values.backText,
+          hints: values.hints ?? [],
+        })
+
+        setCardsData((previous) => ({
+          ...previous,
+          items: previous.items.map((item) => (item.id === updated.id ? updated : item)),
+        }))
+
+        toast({
+          title: "Flashcard updated",
+          description: "Your changes to this flashcard have been saved.",
+        })
+
+        void loadSets(searchQuery, currentPage)
+      } catch (error) {
+        console.error("Failed to update flashcard", error)
+        throw error
+      }
+    },
+    [cardBeingEdited, currentPage, loadSets, searchQuery, toast],
+  )
+
+  const handleDeleteCard = useCallback(async () => {
+    if (!selectedSet || !cardPendingDeletion) {
+      return
+    }
+
+    try {
+      setIsDeletingCard(true)
+      const deleted = await api.flashcards.deleteCard(cardPendingDeletion.id)
+      if (!deleted) {
+        throw new Error("Delete flashcard returned false")
+      }
+
+      toast({
+        title: "Flashcard deleted",
+        description: "The flashcard has been removed from this set.",
+      })
+
+      setShowDeleteCardDialog(false)
+      setCardPendingDeletion(null)
+
+      await loadCards(selectedSet.id)
+      void loadSets(searchQuery, currentPage)
+    } catch (error) {
+      console.error("Failed to delete flashcard", error)
+      toast({
+        title: "Unable to delete flashcard",
+        description: "We couldn't delete this flashcard. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsDeletingCard(false)
+    }
+  }, [cardPendingDeletion, currentPage, loadCards, loadSets, searchQuery, selectedSet, toast])
+
+  const handleEditCardClick = useCallback((card: Flashcard) => {
+    setCardBeingEdited(card)
+    setShowEditCardDialog(true)
+  }, [])
+
+  const handleEditCardDialogChange = useCallback((open: boolean) => {
+    setShowEditCardDialog(open)
+    if (!open) {
+      setCardBeingEdited(null)
+    }
+  }, [])
+
+  const handleRequestDeleteCard = useCallback((card: Flashcard) => {
+    setCardPendingDeletion(card)
+    setShowDeleteCardDialog(true)
+  }, [])
+
+  const handleDeleteCardDialogChange = useCallback((open: boolean) => {
+    setShowDeleteCardDialog(open)
+    if (!open) {
+      setCardPendingDeletion(null)
+      setIsDeletingCard(false)
+    }
+  }, [])
+
   const handleSheetChange = useCallback(
     (open: boolean) => {
       setIsDetailOpen(open)
       if (!open) {
         setShowAddCardDialog(false)
+        setShowEditSetDialog(false)
+        setShowEditCardDialog(false)
+        setCardBeingEdited(null)
+        setShowDeleteSetDialog(false)
+        setShowDeleteCardDialog(false)
+        setCardPendingDeletion(null)
+        setIsDeletingCard(false)
+        setIsDeletingSet(false)
         setSelectedSet(null)
         setCardsData(createEmptyCardsState())
       } else if (open && selectedSet) {
@@ -371,27 +596,123 @@ export function FlashcardsPage() {
         onSubmit={(values) => handleCreateSet(values)}
       />
 
+      <FlashcardSetFormDialog
+        open={showEditSetDialog && Boolean(selectedSet)}
+        mode="edit"
+        initialValues={
+          selectedSet
+            ? {
+                title: selectedSet.title,
+                description: selectedSet.description ?? null,
+                topicId: selectedSet.topicId ?? null,
+                levelId: selectedSet.levelId ?? null,
+              }
+            : undefined
+        }
+        onOpenChange={setShowEditSetDialog}
+        onSubmit={(values) => handleUpdateSet(values)}
+      />
+
       <FlashcardFormDialog
         open={showAddCardDialog}
         onOpenChange={setShowAddCardDialog}
         onSubmit={(values) => handleAddCard(values)}
       />
 
+      <FlashcardFormDialog
+        open={showEditCardDialog && Boolean(cardBeingEdited)}
+        mode="edit"
+        initialValues={
+          cardBeingEdited
+            ? {
+                frontText: cardBeingEdited.frontText,
+                backText: cardBeingEdited.backText,
+                hints: cardBeingEdited.hints,
+              }
+            : undefined
+        }
+        onOpenChange={handleEditCardDialogChange}
+        onSubmit={(values) => handleUpdateCard(values)}
+      />
+
+      <AlertDialog open={showDeleteSetDialog && Boolean(selectedSet)} onOpenChange={setShowDeleteSetDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this flashcard set?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. All flashcards in "{selectedSet?.title ?? "this set"}" will be permanently
+              removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingSet}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void handleDeleteSet()} disabled={isDeletingSet}>
+              {isDeletingSet ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              Delete set
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={showDeleteCardDialog && Boolean(cardPendingDeletion)}
+        onOpenChange={handleDeleteCardDialogChange}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this flashcard?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This card will be removed from "{selectedSet?.title ?? "this set"}". This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingCard}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void handleDeleteCard()} disabled={isDeletingCard}>
+              {isDeletingCard ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              Delete card
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Sheet open={isDetailOpen} onOpenChange={handleSheetChange}>
         <SheetContent side="right" className="sm:max-w-2xl">
           <SheetHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-                <BookOpen className="h-5 w-5" />
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-1 items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                  <BookOpen className="h-5 w-5" />
+                </div>
+                <div>
+                  <SheetTitle className="text-left">{selectedSet?.title ?? "Flashcard set"}</SheetTitle>
+                  <SheetDescription className="text-left">
+                    {selectedSet?.description
+                      ? selectedSet.description
+                      : "Review the cards inside this set and add new content."}
+                  </SheetDescription>
+                </div>
               </div>
-              <div>
-                <SheetTitle className="text-left">{selectedSet?.title ?? "Flashcard set"}</SheetTitle>
-                <SheetDescription className="text-left">
-                  {selectedSet?.description
-                    ? selectedSet.description
-                    : "Review the cards inside this set and add new content."}
-                </SheetDescription>
-              </div>
+              {selectedSet ? (
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setShowEditSetDialog(true)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Edit set
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setShowDeleteSetDialog(true)}
+                    disabled={isDeletingSet}
+                  >
+                    {isDeletingSet ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="mr-2 h-4 w-4" />
+                    )}
+                    Delete set
+                  </Button>
+                </div>
+              ) : null}
             </div>
           </SheetHeader>
 
@@ -457,16 +778,36 @@ export function FlashcardsPage() {
                     <div className="space-y-4">
                       {cardsData.items.map((card, index) => (
                         <div key={card.id} className="space-y-4 rounded-lg border border-green-200 bg-green-50/30 p-4 shadow-sm">
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-2">
                               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-600">
                                 <FileText className="h-3 w-3" />
                               </div>
                               <span className="text-sm font-medium text-green-800">Card {index + 1}</span>
                             </div>
-                            <Badge variant="outline" className="text-xs">
-                              Order: {card.ord}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">
+                                Order: {card.ord}
+                              </Badge>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleEditCardClick(card)}
+                                aria-label="Edit flashcard"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={() => handleRequestDeleteCard(card)}
+                                aria-label="Delete flashcard"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -16,6 +16,12 @@ interface FlashcardFormState {
 
 interface FlashcardFormDialogProps {
   open: boolean
+  mode?: "create" | "edit"
+  initialValues?: {
+    frontText?: string
+    backText?: string
+    hints?: string[]
+  }
   onOpenChange: (open: boolean) => void
   onSubmit: (values: { frontText: string; backText: string; hints?: string[] }) => Promise<void> | void
 }
@@ -26,17 +32,25 @@ const defaultState: FlashcardFormState = {
   hintsText: "",
 }
 
-export function FlashcardFormDialog({ open, onOpenChange, onSubmit }: FlashcardFormDialogProps) {
+export function FlashcardFormDialog({ open, mode = "create", initialValues, onOpenChange, onSubmit }: FlashcardFormDialogProps) {
   const { toast } = useToast()
   const [formState, setFormState] = useState<FlashcardFormState>(defaultState)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (open) {
-      setFormState(defaultState)
+      setFormState({
+        frontText: initialValues?.frontText ?? "",
+        backText: initialValues?.backText ?? "",
+        hintsText: initialValues?.hints?.join("\n") ?? "",
+      })
       setIsSubmitting(false)
     }
-  }, [open])
+  }, [initialValues?.backText, initialValues?.frontText, initialValues?.hints, open])
+
+  const isEditMode = mode === "edit"
+  const dialogTitle = isEditMode ? "Edit flashcard" : "Add flashcard"
+  const submitLabel = isSubmitting ? "Saving..." : isEditMode ? "Save changes" : "Add card"
 
   const handleClose = () => {
     if (!isSubmitting) {
@@ -71,7 +85,7 @@ export function FlashcardFormDialog({ open, onOpenChange, onSubmit }: FlashcardF
     } catch (error) {
       console.error("Failed to submit flashcard form", error)
       toast({
-        title: "Unable to add flashcard",
+        title: isEditMode ? "Unable to update flashcard" : "Unable to add flashcard",
         description: "Something went wrong while saving the flashcard. Please try again.",
         variant: "destructive",
       })
@@ -84,7 +98,7 @@ export function FlashcardFormDialog({ open, onOpenChange, onSubmit }: FlashcardF
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add flashcard</DialogTitle>
+          <DialogTitle>{dialogTitle}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -133,7 +147,7 @@ export function FlashcardFormDialog({ open, onOpenChange, onSubmit }: FlashcardF
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Add card"}
+              {submitLabel}
             </Button>
           </DialogFooter>
         </form>

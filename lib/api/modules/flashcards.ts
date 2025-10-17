@@ -4,7 +4,11 @@ import {
   GET_FLASHCARD_SETS,
   GET_FLASHCARDS,
   CREATE_FLASHCARD_SET,
+  UPDATE_FLASHCARD_SET,
+  DELETE_FLASHCARD_SET,
   ADD_FLASHCARD,
+  UPDATE_FLASHCARD,
+  DELETE_FLASHCARD,
 } from '@/lib/graphql/queries'
 import type {
   FlashcardSet as GraphqlFlashcardSet,
@@ -21,6 +25,14 @@ import type {
   AddFlashcardVariables,
   CreateFlashcardSetResponse,
   AddFlashcardResponse,
+  UpdateFlashcardSetVariables,
+  DeleteFlashcardSetVariables,
+  UpdateFlashcardVariables,
+  DeleteFlashcardVariables,
+  UpdateFlashcardSetResponse,
+  DeleteFlashcardSetResponse,
+  UpdateFlashcardResponse,
+  DeleteFlashcardResponse,
   FlashcardSetFilterInput,
   FlashcardSetOrderInput,
   FlashcardFilterInput,
@@ -31,7 +43,14 @@ import {
   FlashcardSetOrderField,
   FlashcardOrderField,
 } from '@/content_schema'
-import type { FlashcardSet, Flashcard, CreateFlashcardSetDto, AddFlashcardDto } from '@/types/flashcard'
+import type {
+  FlashcardSet,
+  Flashcard,
+  CreateFlashcardSetDto,
+  UpdateFlashcardSetDto,
+  AddFlashcardDto,
+  UpdateFlashcardDto,
+} from '@/types/flashcard'
 import type { GraphqlListResult } from './content'
 
 const mapTag = (tag: GraphqlFlashcardSet['tags'][number]): FlashcardSet['tags'][number] => ({
@@ -96,6 +115,31 @@ const buildCreateFlashcardSetInput = (
   levelId: data.levelId || undefined,
 })
 
+const buildUpdateFlashcardSetInput = (
+  data: UpdateFlashcardSetDto,
+): UpdateFlashcardSetVariables['input'] => {
+  const input: UpdateFlashcardSetVariables['input'] = {}
+
+  if (typeof data.title === 'string') {
+    input.title = data.title.trim()
+  }
+
+  if (data.description !== undefined) {
+    const trimmed = data.description?.trim()
+    input.description = trimmed && trimmed.length > 0 ? trimmed : null
+  }
+
+  if (data.topicId !== undefined) {
+    input.topicId = data.topicId ?? null
+  }
+
+  if (data.levelId !== undefined) {
+    input.levelId = data.levelId ?? null
+  }
+
+  return input
+}
+
 const buildAddFlashcardInput = (data: AddFlashcardDto): AddFlashcardVariables['input'] => ({
   setId: data.setId,
   frontText: data.frontText.trim(),
@@ -104,6 +148,47 @@ const buildAddFlashcardInput = (data: AddFlashcardDto): AddFlashcardVariables['i
   backMediaId: data.backMediaId || undefined,
   hints: data.hints && data.hints.length > 0 ? data.hints : undefined,
 })
+
+const buildUpdateFlashcardInput = (
+  data: UpdateFlashcardDto,
+): UpdateFlashcardVariables['input'] => {
+  const input: UpdateFlashcardVariables['input'] = {}
+
+  if (typeof data.setId === 'string') {
+    input.setId = data.setId
+  }
+
+  if (typeof data.frontText === 'string') {
+    input.frontText = data.frontText.trim()
+  }
+
+  if (typeof data.backText === 'string') {
+    input.backText = data.backText.trim()
+  }
+
+  if (data.frontMediaId !== undefined) {
+    input.frontMediaId = data.frontMediaId
+  }
+
+  if (data.backMediaId !== undefined) {
+    input.backMediaId = data.backMediaId
+  }
+
+  if (data.hints !== undefined) {
+    const filtered = (data.hints ?? [])
+      .filter((hint): hint is string => typeof hint === 'string')
+      .map((hint) => hint.trim())
+      .filter((hint) => hint.length > 0)
+
+    input.hints = filtered
+  }
+
+  if (typeof data.ord === 'number') {
+    input.ord = data.ord
+  }
+
+  return input
+}
 
 type GetFlashcardSetsParams = {
   search?: string
@@ -268,6 +353,96 @@ export const flashcards = {
     } catch (error) {
       console.error('Failed to add flashcard via GraphQL:', error)
       throw new Error('Failed to add flashcard')
+    }
+  },
+
+  updateSet: async (id: string, data: UpdateFlashcardSetDto): Promise<FlashcardSet> => {
+    try {
+      const payload: UpdateFlashcardSetVariables = {
+        id,
+        input: buildUpdateFlashcardSetInput(data),
+      }
+
+      const { data: response } = await apolloClient.mutate<
+        UpdateFlashcardSetResponse,
+        UpdateFlashcardSetVariables
+      >({
+        mutation: UPDATE_FLASHCARD_SET,
+        variables: payload,
+      })
+
+      if (!response?.updateFlashcardSet) {
+        throw new Error('Failed to update flashcard set')
+      }
+
+      return mapFlashcardSet(response.updateFlashcardSet)
+    } catch (error) {
+      console.error('Failed to update flashcard set via GraphQL:', error)
+      throw new Error('Failed to update flashcard set')
+    }
+  },
+
+  deleteSet: async (id: string): Promise<boolean> => {
+    try {
+      const payload: DeleteFlashcardSetVariables = { id }
+
+      const { data: response } = await apolloClient.mutate<
+        DeleteFlashcardSetResponse,
+        DeleteFlashcardSetVariables
+      >({
+        mutation: DELETE_FLASHCARD_SET,
+        variables: payload,
+      })
+
+      return Boolean(response?.deleteFlashcardSet)
+    } catch (error) {
+      console.error('Failed to delete flashcard set via GraphQL:', error)
+      throw new Error('Failed to delete flashcard set')
+    }
+  },
+
+  updateCard: async (id: string, data: UpdateFlashcardDto): Promise<Flashcard> => {
+    try {
+      const payload: UpdateFlashcardVariables = {
+        id,
+        input: buildUpdateFlashcardInput(data),
+      }
+
+      const { data: response } = await apolloClient.mutate<
+        UpdateFlashcardResponse,
+        UpdateFlashcardVariables
+      >({
+        mutation: UPDATE_FLASHCARD,
+        variables: payload,
+      })
+
+      if (!response?.updateFlashcard) {
+        throw new Error('Failed to update flashcard')
+      }
+
+      return mapFlashcard(response.updateFlashcard)
+    } catch (error) {
+      console.error('Failed to update flashcard via GraphQL:', error)
+      throw new Error('Failed to update flashcard')
+    }
+  },
+
+  deleteCard: async (id: string): Promise<boolean> => {
+    try {
+      const payload: DeleteFlashcardVariables = { id }
+
+      const { data: response } = await apolloClient.mutate<
+        DeleteFlashcardResponse,
+        DeleteFlashcardVariables
+      >({
+        mutation: DELETE_FLASHCARD,
+        variables: payload,
+      })
+
+      return Boolean(response?.deleteFlashcard)
+    } catch (error) {
+      console.error('Failed to delete flashcard via GraphQL:', error)
+      throw new Error('Failed to delete flashcard')
     }
   },
 }

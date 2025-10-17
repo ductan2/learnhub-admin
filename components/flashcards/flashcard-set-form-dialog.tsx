@@ -12,30 +12,59 @@ import { LevelSelect } from "@/components/ui/level-select"
 import { useToast } from "@/hooks/use-toast"
 import type { CreateFlashcardSetDto } from "@/types/flashcard"
 
+interface FlashcardSetFormState {
+  title: string
+  description: string
+  topicId: string | null
+  levelId: string | null
+}
+
 interface FlashcardSetFormDialogProps {
   open: boolean
+  mode?: "create" | "edit"
+  initialValues?: {
+    title?: string
+    description?: string | null
+    topicId?: string | null
+    levelId?: string | null
+  }
   onOpenChange: (open: boolean) => void
   onSubmit: (values: CreateFlashcardSetDto) => Promise<void> | void
 }
 
-const defaultState: CreateFlashcardSetDto = {
+const defaultState: FlashcardSetFormState = {
   title: "",
   description: "",
   topicId: null,
   levelId: null,
 }
 
-export function FlashcardSetFormDialog({ open, onOpenChange, onSubmit }: FlashcardSetFormDialogProps) {
+export function FlashcardSetFormDialog({
+  open,
+  mode = "create",
+  initialValues,
+  onOpenChange,
+  onSubmit,
+}: FlashcardSetFormDialogProps) {
   const { toast } = useToast()
-  const [formState, setFormState] = useState<CreateFlashcardSetDto>(defaultState)
+  const [formState, setFormState] = useState<FlashcardSetFormState>(defaultState)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (open) {
-      setFormState(defaultState)
+      setFormState({
+        title: initialValues?.title ?? "",
+        description: initialValues?.description ?? "",
+        topicId: initialValues?.topicId ?? null,
+        levelId: initialValues?.levelId ?? null,
+      })
       setIsSubmitting(false)
     }
-  }, [open])
+  }, [initialValues?.description, initialValues?.levelId, initialValues?.title, initialValues?.topicId, open])
+
+  const isEditMode = mode === "edit"
+  const dialogTitle = isEditMode ? "Edit flashcard set" : "Create flashcard set"
+  const submitLabel = isSubmitting ? "Saving..." : isEditMode ? "Save changes" : "Create set"
 
   const handleClose = () => {
     if (!isSubmitting) {
@@ -58,9 +87,12 @@ export function FlashcardSetFormDialog({ open, onOpenChange, onSubmit }: Flashca
 
     const payload: CreateFlashcardSetDto = {
       title: trimmedTitle,
-      description: formState.description?.trim() || undefined,
-      topicId: formState.topicId || undefined,
-      levelId: formState.levelId || undefined,
+      description: (() => {
+        const trimmed = formState.description.trim()
+        return trimmed.length > 0 ? trimmed : null
+      })(),
+      topicId: formState.topicId,
+      levelId: formState.levelId,
     }
 
     try {
@@ -70,7 +102,7 @@ export function FlashcardSetFormDialog({ open, onOpenChange, onSubmit }: Flashca
     } catch (error) {
       console.error("Failed to submit flashcard set form", error)
       toast({
-        title: "Unable to save flashcard set",
+        title: isEditMode ? "Unable to update flashcard set" : "Unable to save flashcard set",
         description: "Something went wrong while saving the flashcard set. Please try again.",
         variant: "destructive",
       })
@@ -83,7 +115,7 @@ export function FlashcardSetFormDialog({ open, onOpenChange, onSubmit }: Flashca
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create flashcard set</DialogTitle>
+          <DialogTitle>{dialogTitle}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
@@ -104,7 +136,7 @@ export function FlashcardSetFormDialog({ open, onOpenChange, onSubmit }: Flashca
             <Label htmlFor="flashcard-set-description">Description</Label>
             <Textarea
               id="flashcard-set-description"
-              value={formState.description || ""}
+              value={formState.description}
               onChange={(event) => setFormState((state) => ({ ...state, description: event.target.value }))}
               placeholder="Describe the focus of this set"
               rows={3}
@@ -138,7 +170,7 @@ export function FlashcardSetFormDialog({ open, onOpenChange, onSubmit }: Flashca
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Create set"}
+              {submitLabel}
             </Button>
           </DialogFooter>
         </form>
