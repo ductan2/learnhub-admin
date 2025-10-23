@@ -1,11 +1,11 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { LessonList } from "@/components/lessons/lesson-list"
 import { LessonFormDialog } from "@/components/lessons/lesson-form-dialog"
-import { LessonEditorDialog } from "@/components/lessons/lesson-editor-dialog"
 import { api } from "@/lib/api/exports"
-import type { Lesson, CreateLessonDto, LessonSection, LessonFilters } from "@/types/lesson"
+import type { Lesson, CreateLessonDto, LessonFilters } from "@/types/lesson"
 import type { Topic, Level } from "@/types/common"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -29,18 +29,10 @@ export function LessonsPage() {
   const [publishedFilter, setPublishedFilter] = useState("all")
   const [isLoadingLessons, setIsLoadingLessons] = useState(false)
   const isMountedRef = useRef(false)
+  const router = useRouter()
   const [formDialog, setFormDialog] = useState<{ open: boolean; lesson: Lesson | null }>({
     open: false,
     lesson: null,
-  })
-  const [editorDialog, setEditorDialog] = useState<{
-    open: boolean
-    lesson: Lesson | null
-    initialTab: "edit" | "preview"
-  }>({
-    open: false,
-    lesson: null,
-    initialTab: "edit",
   })
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; lessonId: string | null }>({
     open: false,
@@ -220,13 +212,6 @@ export function LessonsPage() {
     }
   }
 
-  const handleSaveSections = (sections: LessonSection[]) => {
-    toast({
-      title: "Success",
-      description: "Lesson sections saved successfully",
-    })
-  }
-
   return (
     <div className="p-6">
       <LessonList
@@ -235,14 +220,10 @@ export function LessonsPage() {
         levels={levels}
         onCreateLesson={() => setFormDialog({ open: true, lesson: null })}
         onEditLesson={(lesson) => setFormDialog({ open: true, lesson })}
-        onEditLessonSections={(lesson) =>
-          setEditorDialog({ open: true, lesson, initialTab: "edit" })
-        }
+        onEditLessonSections={(lesson) => router.push(`/lessons/${lesson.id}`)}
         onDeleteLesson={(lessonId) => setDeleteDialog({ open: true, lessonId })}
         onTogglePublish={handleTogglePublish}
-        onPreviewLesson={(lesson) =>
-          setEditorDialog({ open: true, lesson, initialTab: "preview" })
-        }
+        onPreviewLesson={(lesson) => router.push(`/lessons/${lesson.id}?view=preview`)}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         topicFilter={topicFilter}
@@ -261,14 +242,6 @@ export function LessonsPage() {
         lesson={formDialog.lesson}
         topics={topics}
         levels={levels}
-      />
-
-      <LessonEditorDialog
-        open={editorDialog.open}
-        onClose={() => setEditorDialog({ open: false, lesson: null, initialTab: "edit" })}
-        lesson={editorDialog.lesson}
-        onSave={handleSaveSections}
-        initialTab={editorDialog.initialTab}
       />
 
       <AlertDialog
