@@ -172,7 +172,7 @@ export const media = {
 
   upload: async (
     file: File,
-    kind: 'IMAGE' | 'AUDIO',
+    kind: 'IMAGE' | 'AUDIO' | 'VIDEO',
     folderId?: string | null,
   ): Promise<MediaAsset> => {
     try {

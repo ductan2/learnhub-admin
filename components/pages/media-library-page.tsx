@@ -67,7 +67,9 @@ export function MediaLibraryPage() {
           ? "IMAGE"
           : mimeTypeFilter === "audio"
             ? "AUDIO"
-            : undefined
+            : mimeTypeFilter === "video"
+              ? "VIDEO"
+              : undefined
 
       const data = await api.media.getAssets({
         folderId: selectedFolderId ?? undefined,
@@ -75,15 +77,10 @@ export function MediaLibraryPage() {
         kind: kindFilter,
       })
 
-      const filteredAssets =
-        mimeTypeFilter === "video"
-          ? data.filter((asset) => asset.mimeType.startsWith("video/"))
-          : data
-
-      setAssets(filteredAssets)
+      setAssets(data)
       setSelectedAssets((prev) => {
         const next = new Set<string>()
-        filteredAssets.forEach((asset) => {
+        data.forEach((asset) => {
           if (prev.has(asset.id)) {
             next.add(asset.id)
           }
@@ -183,14 +180,16 @@ export function MediaLibraryPage() {
 
     const kind = file.type.startsWith("image/")
       ? "IMAGE"
-      : file.type.startsWith("audio/")
-        ? "AUDIO"
-        : null
+      : file.type.startsWith("video/")
+        ? "VIDEO"
+        : file.type.startsWith("audio/")
+          ? "AUDIO"
+          : null
 
     if (kind === null) {
       toast({
         title: "Unsupported file type",
-        description: "File must be an image or audio to upload",
+        description: "File must be an image, video, or audio to upload",
         variant: "destructive",
       })
       return

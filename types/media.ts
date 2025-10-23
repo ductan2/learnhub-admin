@@ -16,7 +16,7 @@ export interface Folder {
 export interface MediaAsset {
     id: string
     storageKey: string
-    kind: 'IMAGE' | 'AUDIO'
+    kind: 'IMAGE' | 'AUDIO' | 'VIDEO'
     mimeType: string
     folderId?: string | null
     originalName: string
@@ -31,7 +31,7 @@ export interface MediaAsset {
 
 export interface MediaAssetFilter {
     folderId?: string
-    kind?: 'IMAGE' | 'AUDIO'
+    kind?: 'IMAGE' | 'AUDIO' | 'VIDEO'
     uploadedBy?: string
     sha256?: string
     search?: string
@@ -51,7 +51,7 @@ export interface MediaAssetCollection {
 
 export interface MediaFilters {
     folderId?: string | null
-    kind?: 'IMAGE' | 'AUDIO'
+    kind?: 'IMAGE' | 'AUDIO' | 'VIDEO'
     uploadedBy?: string
     sha256?: string
     search?: string

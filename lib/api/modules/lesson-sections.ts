@@ -72,14 +72,28 @@ const mapSectionBodyToGraphql = (section: LessonSection): CreateLessonSectionInp
 
   const trimmedContent = section.content?.trim()
 
-  if (section.type === 'text' || section.type === 'video') {
+  if (section.type === 'text') {
     if (trimmedContent) {
       body.content = trimmedContent
     }
   }
 
-  if (section.type === 'image' && section.media_id) {
-    body.mediaId = section.media_id
+  if (section.type === 'video') {
+    if (trimmedContent) {
+      body.content = trimmedContent
+    }
+    if (section.media_id) {
+      body.mediaId = section.media_id
+    }
+  }
+
+  if (section.type === 'image') {
+    if (section.media_id) {
+      body.mediaId = section.media_id
+    }
+    if (trimmedContent) {
+      body.url = trimmedContent
+    }
   }
 
   if (section.type === 'quiz' && section.quiz_id) {
