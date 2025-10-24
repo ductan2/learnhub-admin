@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Mail, MailCheck, Trophy, BookOpen, HelpCircle, TrendingUp, Shield, Lock, Unlock, Trash2, RotateCcw, KeyRound, Building2, Calendar, Globe } from "lucide-react"
+import { ArrowLeft, Mail, MailCheck, Trophy, BookOpen, HelpCircle, TrendingUp, Shield, Lock, Unlock, Trash2, RotateCcw, KeyRound, Calendar, Globe, Clock, Loader2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -21,10 +21,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import type { User, UserRole } from "@/types/user"
+import { STATUS_ACTIVE, STATUS_DELETED, STATUS_DISABLED, STATUS_LOCKED, type User, type UserPoints, type UserStreak } from "@/types/user"
 import type { Enrollment, QuizAttempt } from "@/types/common"
 import { api } from "@/lib/api/exports"
 import { useToast } from "@/hooks/use-toast"
+import { UserDetailSkeleton } from "./user-detail-skeleton"
 
 interface UserDetailProps {
   userId: string
@@ -32,6 +33,8 @@ interface UserDetailProps {
 
 export function UserDetail({ userId }: UserDetailProps) {
   const [user, setUser] = useState<User | null>(null)
+  const [userPoints, setUserPoints] = useState<UserPoints | null>(null)
+  const [userStreak, setUserStreak] = useState<UserStreak | null>(null)
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
   const [quizAttempts, setQuizAttempts] = useState<QuizAttempt[]>([])
   const [isUpdating, setIsUpdating] = useState(false)
@@ -47,12 +50,14 @@ export function UserDetail({ userId }: UserDetailProps) {
     const loadUserDetails = async () => {
       setIsLoading(true)
       try {
-        const [userData, enrollmentsData, attemptsData] = await Promise.all([
+        const [infoData, enrollmentsData, attemptsData] = await Promise.all([
           api.users.getById(userId),
           api.enrollments.getByUserId(userId),
           api.quizAttempts.getByUserId(userId),
         ])
-        setUser(userData)
+        setUser(infoData.user)
+        setUserPoints(infoData.points || null)
+        setUserStreak(infoData.streak || null)
         setEnrollments(enrollmentsData)
         setQuizAttempts(attemptsData)
       } catch (error) {
@@ -69,15 +74,17 @@ export function UserDetail({ userId }: UserDetailProps) {
     loadUserDetails()
   }, [userId, toast])
 
-  const handleRoleChange = async (newRole: UserRole) => {
+  const handleRoleChange = async (newRole: string) => {
     if (!user) return
     setIsUpdating(true)
     try {
-      const updatedUser = await api.users.updateRole(user.id, newRole.id)
-      setUser(updatedUser)
+      await api.users.updateRole(user.id, newRole)
+      // Reload user data to get updated role information
+      const userData = await api.users.getById(user.id)
+      setUser(userData.user)
       toast({
         title: "Role updated",
-        description: `User role changed to ${newRole}`,
+        description: `User role updated successfully`,
       })
     } catch (error) {
       toast({
@@ -90,26 +97,6 @@ export function UserDetail({ userId }: UserDetailProps) {
     }
   }
 
-  const handleTenantChange = async (newTenant: string) => {
-    if (!user) return
-    setIsUpdating(true)
-    try {
-      const updatedUser = await api.users.updateTenant(user.id, newTenant)
-      setUser(updatedUser)
-      toast({
-        title: "Tenant updated",
-        description: `User tenant changed to ${newTenant}`,
-      })
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update user tenant",
-        variant: "destructive",
-      })
-    } finally {
-      setIsUpdating(false)
-    }
-  }
 
   const handleLockAccount = async () => {
     if (!user) return
@@ -221,11 +208,7 @@ export function UserDetail({ userId }: UserDetailProps) {
   }
 
   if (isLoading) {
-    return (
-      <div className="p-6">
-        <p className="text-sm text-muted-foreground">Loading user details...</p>
-      </div>
-    )
+    return <UserDetailSkeleton />
   }
 
   if (!user) {
@@ -256,19 +239,17 @@ export function UserDetail({ userId }: UserDetailProps) {
       ? quizAttempts.reduce((sum, a) => sum + (a.score / a.max_score) * 100, 0) / quizAttempts.length
       : 0
 
+
+
   const getStatusBadge = (status: User["status"]) => {
     switch (status) {
-      case "active":
+      case STATUS_ACTIVE:
         return <Badge className="bg-green-500/10 text-green-500">Active</Badge>
-      case "locked":
+      case STATUS_LOCKED:
         return <Badge className="bg-orange-500/10 text-orange-500">Locked</Badge>
-      case "suspended":
-        return <Badge className="bg-yellow-500/10 text-yellow-500">Suspended</Badge>
-      case "banned":
-        return <Badge variant="destructive">Banned</Badge>
-      case "disabled":
+      case STATUS_DISABLED:
         return <Badge className="bg-gray-500/10 text-gray-500">Disabled</Badge>
-      case "deleted":
+      case STATUS_DELETED:
         return <Badge variant="destructive">Deleted</Badge>
       default:
         return <Badge variant="outline">{status}</Badge>
@@ -277,12 +258,14 @@ export function UserDetail({ userId }: UserDetailProps) {
 
   const getRoleBadge = (role: User["role"]) => {
     switch (role) {
+      case "student":
+        return <Badge className="bg-slate-500/10 text-slate-500">Student</Badge>
+      case "teacher":
+        return <Badge className="bg-cyan-500/10 text-cyan-500">Teacher</Badge>
       case "admin":
         return <Badge className="bg-purple-500/10 text-purple-500">Admin</Badge>
-      case "moderator":
-        return <Badge className="bg-blue-500/10 text-blue-500">Moderator</Badge>
-      case "instructor":
-        return <Badge className="bg-cyan-500/10 text-cyan-500">Instructor</Badge>
+      case "super-admin":
+        return <Badge className="bg-indigo-500/10 text-indigo-500">Super Admin</Badge>
       default:
         return <Badge variant="outline">User</Badge>
     }
@@ -304,10 +287,10 @@ export function UserDetail({ userId }: UserDetailProps) {
       <div className="space-y-6">
         <div className="flex items-start gap-4">
           <Avatar className="h-20 w-20">
-            <AvatarImage src={user.profile.avatar_url || "/placeholder.svg"} />
+            <AvatarImage src={user.profile?.avatar_url || "/placeholder.svg"} />
             <AvatarFallback className="text-2xl">{getInitials(user.profile.display_name)}</AvatarFallback>
           </Avatar>
-    
+
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h1 className="text-2xl font-bold">{user.profile.display_name}</h1>
@@ -322,7 +305,7 @@ export function UserDetail({ userId }: UserDetailProps) {
 
             <div className="flex flex-wrap gap-2 mt-3">
               {getStatusBadge(user.status)}
-              {getRoleBadge(user.role.name)}
+              {getRoleBadge(user.role)}
               {user.email_verified ? (
                 <Badge variant="outline">Email Verified</Badge>
               ) : (
@@ -337,31 +320,51 @@ export function UserDetail({ userId }: UserDetailProps) {
             <Shield className="h-4 w-4" />
             Admin Actions
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="role">Change Role</Label>
-              <Select value={user.role.id} onValueChange={handleRoleChange} disabled={isUpdating}>
-                <SelectTrigger id="role">
-                  <SelectValue />
+          <div className="space-y-4">
+            <div className="bg-muted/30 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="role" className="text-sm font-medium">User Role</Label>
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  Current: {user.role}
+                </Badge>
+              </div>
+              <Select value={user.role} onValueChange={handleRoleChange} disabled={isUpdating}>
+                <SelectTrigger id="role" className="w-full">
+                  <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">User</SelectItem>
-                  <SelectItem value="2">Instructor</SelectItem>
-                  <SelectItem value="3">Moderator</SelectItem>
-                  <SelectItem value="4">Admin</SelectItem>
+                  <SelectItem value="student">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-slate-500"></div>
+                      Student
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="teacher">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-cyan-500"></div>
+                      Teacher
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="admin">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                      Admin
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="super-admin">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+                      Super Admin
+                    </div>
+                  </SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="tenant">Tenant</Label>
-              <Input
-                id="tenant"
-                value={user.tenant}
-                onChange={(e) => handleTenantChange(e.target.value)}
-                disabled={isUpdating}
-                placeholder="Enter tenant name"
-              />
+              <p className="text-xs text-muted-foreground mt-2">
+                Select a new role for this user. Changes will be applied immediately.
+              </p>
             </div>
           </div>
 
@@ -433,7 +436,7 @@ export function UserDetail({ userId }: UserDetailProps) {
               <Trophy className="h-4 w-4" />
               <span className="text-sm">Total Points</span>
             </div>
-            <p className="text-2xl font-bold">{user.points?.toLocaleString()}</p>
+            <p className="text-2xl font-bold">{userPoints?.lifetime}</p>
           </Card>
 
           <Card className="p-4">
@@ -441,7 +444,7 @@ export function UserDetail({ userId }: UserDetailProps) {
               <TrendingUp className="h-4 w-4" />
               <span className="text-sm">Current Streak</span>
             </div>
-            <p className="text-2xl font-bold">{user.streak?.toLocaleString()} days</p>
+            <p className="text-2xl font-bold">{userStreak?.current_len} days</p>
           </Card>
 
           <Card className="p-4">
@@ -478,44 +481,51 @@ export function UserDetail({ userId }: UserDetailProps) {
                 <Shield className="h-3 w-3" />
                 Role
               </span>
-              <p className="font-medium capitalize">{user.role.name}</p>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${user.role === 'student' ? 'bg-slate-500' :
+                  user.role === 'teacher' ? 'bg-cyan-500' :
+                    user.role === 'admin' ? 'bg-purple-500' :
+                      user.role === 'super-admin' ? 'bg-indigo-500' : 'bg-gray-500'
+                  }`}></div>
+                <p className="font-medium capitalize">{user.role}</p>
+              </div>
             </div>
             <div>
               <span className="text-muted-foreground flex items-center gap-2 mb-1">
-                <Building2 className="h-3 w-3" />
-                Tenant
+                <Clock className="h-3 w-3" />
+                Timezone
               </span>
-              <p className="font-medium">{user.tenant}</p>
+              <p className="font-medium">{user.profile.time_zone}</p>
             </div>
             <div>
               <span className="text-muted-foreground flex items-center gap-2 mb-1">
                 <Calendar className="h-3 w-3" />
                 Created
               </span>
-              <p className="font-medium">{new Date(user.created_at).toLocaleDateString()}</p>
+              <p className="font-medium">{new Date(user.created_at).toLocaleString()}</p>
             </div>
             <div>
               <span className="text-muted-foreground flex items-center gap-2 mb-1">
                 <Calendar className="h-3 w-3" />
                 Updated
               </span>
-              <p className="font-medium">{new Date(user.updated_at).toLocaleDateString()}</p>
+              <p className="font-medium">{new Date(user.updated_at).toLocaleString()}</p>
             </div>
             <div>
               <span className="text-muted-foreground flex items-center gap-2 mb-1">
                 <Globe className="h-3 w-3" />
                 Last Login
               </span>
-              <p className="font-medium">
+              <span className="font-medium">
                 {user.last_login_at ? new Date(user.last_login_at).toLocaleString() : "Never"}
-              </p>
+              </span>
             </div>
             <div>
               <span className="text-muted-foreground flex items-center gap-2 mb-1">
                 <Globe className="h-3 w-3" />
                 Last Login IP
               </span>
-              <p className="font-mono text-xs">{user.last_login_ip || "N/A"}</p>
+              <p className="font-medium">{user.last_login_ip || "N/A"}</p>
             </div>
             {user.lockout_until && (
               <div>
@@ -543,7 +553,7 @@ export function UserDetail({ userId }: UserDetailProps) {
                 <Card key={enrollment.id} className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium">Course #{enrollment.course_id}</p>
+                      <p className="font-medium">Lesson #{enrollment.lesson_id}</p>
                       <p className="text-sm text-muted-foreground">
                         Enrolled: {new Date(enrollment.enrolled_at).toLocaleDateString()}
                       </p>

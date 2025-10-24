@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { UserList } from "@/components/users/user-list"
+import { UserListSkeleton } from "@/components/users/user-list-skeleton"
 import { api } from "@/lib/api/exports"
 import type { User } from "@/types/user"
 import { useToast } from "@/hooks/use-toast"
@@ -13,6 +14,7 @@ export function UsersPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [verifiedFilter, setVerifiedFilter] = useState("all")
+  const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
   const { toast } = useToast()
 
@@ -25,6 +27,7 @@ export function UsersPage() {
   }, [users, searchQuery, statusFilter, verifiedFilter])
 
   const loadUsers = async () => {
+    setIsLoading(true)
     try {
       const data = await api.users.getAll()
       setUsers(data)
@@ -34,6 +37,8 @@ export function UsersPage() {
         description: "Failed to load users",
         variant: "destructive",
       })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -80,6 +85,14 @@ export function UsersPage() {
         variant: "destructive",
       })
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <UserListSkeleton />
+      </div>
+    )
   }
 
   return (

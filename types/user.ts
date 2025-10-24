@@ -1,3 +1,8 @@
+export const STATUS_ACTIVE = "active";
+export const STATUS_LOCKED = "locked";
+export const STATUS_DISABLED = "disabled";
+export const STATUS_DELETED = "deleted";
+
 export interface UserProfile {
     display_name: string
     avatar_url?: string
@@ -16,15 +21,27 @@ export interface User {
     last_login_at?: string
     last_login_ip?: string
     lockout_until?: string
-    status: "active" | "banned" | "suspended" | "locked" | "disabled" | "deleted"
+    status: typeof STATUS_ACTIVE | typeof STATUS_LOCKED | typeof STATUS_DISABLED | typeof STATUS_DELETED
     profile: UserProfile
+    role: string
+    tenant: string
     points?: number
     streak?: number
 }
 
-export interface UserRole {
-    id: string
-    name: string
+export interface UserPoints {
+    user_id: string
+    lifetime: number
+    weekly: number
+    monthly: number
+    updated_at: string
+}
+
+export interface UserStreak {
+    user_id: string
+    current_len: number
+    longest_len: number
+    last_day: string | null
 }
 
 // User-related filter types

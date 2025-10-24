@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical } from "lucide-react"
 import type { User } from "@/types/user"
+import { generateColorIndex } from "@/utils/generate"
 
 interface UserListProps {
   users: User[]
@@ -52,14 +53,6 @@ export function UserList({
     { bg: "bg-sky-100", text: "text-sky-700" },
   ]
 
-  const getColorIndex = (seed: string) => {
-    let hash = 0
-    for (let i = 0; i < seed.length; i++) {
-      hash = seed.charCodeAt(i) + ((hash << 5) - hash)
-      hash |= 0
-    }
-    return Math.abs(hash) % colorPalettes.length
-  }
 
   const getStatusBadge = (status: User["status"]) => {
     switch (status) {
@@ -70,18 +63,18 @@ export function UserList({
             Active
           </Badge>
         )
-      case "suspended":
+      case "locked":
         return (
           <Badge className="bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20">
             <ShieldAlert className="h-3 w-3 mr-1" />
-            Suspended
+            Locked
           </Badge>
         )
-      case "banned":
+      case "disabled":
         return (
           <Badge variant="destructive">
             <Shield className="h-3 w-3 mr-1" />
-            Banned
+            Disabled
           </Badge>
         )
     }
@@ -117,8 +110,8 @@ export function UserList({
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="suspended">Suspended</SelectItem>
-              <SelectItem value="banned">Banned</SelectItem>
+              <SelectItem value="locked">Locked</SelectItem>
+              <SelectItem value="disabled">Disabled</SelectItem>
             </SelectContent>
           </Select>
 
@@ -162,7 +155,7 @@ export function UserList({
                   <Avatar>
                     <AvatarImage src={user.profile.avatar_url || undefined} />
                     <AvatarFallback
-                      className={`${colorPalettes[getColorIndex(user.email || user.id)].bg} ${colorPalettes[getColorIndex(user.email || user.id)].text}`}
+                      className={`${colorPalettes[generateColorIndex(user.email || user.id)].bg} ${colorPalettes[generateColorIndex(user.email || user.id)].text}`}
                     >
                       {getInitials(user.profile.display_name || user.email || "U")}
                     </AvatarFallback>
@@ -221,27 +214,27 @@ export function UserList({
                           Activate
                         </DropdownMenuItem>
                       )}
-                      {user.status !== "suspended" && (
+                      {user.status !== "locked" && (
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation()
-                            onUpdateStatus(user.id, "suspended")
+                            onUpdateStatus(user.id, "locked")
                           }}
                         >
                           <ShieldAlert className="h-4 w-4 mr-2" />
-                          Suspend
+                          Lock User
                         </DropdownMenuItem>
                       )}
-                      {user.status !== "banned" && (
+                      {user.status !== "disabled" && (
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation()
-                            onUpdateStatus(user.id, "banned")
+                            onUpdateStatus(user.id, "disabled")
                           }}
                           className="text-destructive"
                         >
                           <Shield className="h-4 w-4 mr-2" />
-                          Ban User
+                          Disable User
                         </DropdownMenuItem>
                       )}
                     </DropdownMenuContent>
