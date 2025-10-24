@@ -288,19 +288,27 @@ export const mockQuizAttempts: QuizAttempt[] = [
     id: "1",
     user_id: "1",
     quiz_id: "1",
-    score: 85,
-    max_score: 100,
+    lesson_id: "lesson-1",
+    duration_ms: 1500000, // 25 minutes
+    total_points: 85,
+    max_points: 100,
+    passed: true,
+    attempt_no: 1,
     started_at: "2024-02-15T10:00:00Z",
-    completed_at: "2024-02-15T10:25:00Z",
+    submitted_at: "2024-02-15T10:25:00Z",
   },
   {
     id: "2",
     user_id: "2",
     quiz_id: "2",
-    score: 92,
-    max_score: 100,
+    lesson_id: "lesson-2",
+    duration_ms: 1800000, // 30 minutes
+    total_points: 92,
+    max_points: 100,
+    passed: true,
+    attempt_no: 1,
     started_at: "2024-02-20T14:00:00Z",
-    completed_at: "2024-02-20T14:40:00Z",
+    submitted_at: "2024-02-20T14:40:00Z",
   },
 ]
 

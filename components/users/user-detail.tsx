@@ -236,7 +236,7 @@ export function UserDetail({ userId }: UserDetailProps) {
 
   const avgQuizScore =
     quizAttempts.length > 0
-      ? quizAttempts.reduce((sum, a) => sum + (a.score / a.max_score) * 100, 0) / quizAttempts.length
+      ? quizAttempts.reduce((sum, a) => sum + (a.total_points / a.max_points) * 100, 0) / quizAttempts.length
       : 0
 
 
@@ -579,20 +579,45 @@ export function UserDetail({ userId }: UserDetailProps) {
               quizAttempts.map((attempt) => (
                 <Card key={attempt.id} className="p-4">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Quiz #{attempt.quiz_id}</p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-medium">Quiz #{attempt.quiz_id}</p>
+                        {attempt.lesson_id && (
+                          <Badge variant="outline" className="text-xs">
+                            Lesson #{attempt.lesson_id}
+                          </Badge>
+                        )}
+                        <Badge variant="secondary" className="text-xs">
+                          Attempt #{attempt.attempt_no}
+                        </Badge>
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         Started: {new Date(attempt.started_at).toLocaleDateString()}
                       </p>
+                      {attempt.duration_ms && (
+                        <p className="text-xs text-muted-foreground">
+                          Duration: {Math.round(attempt.duration_ms / 60000)} minutes
+                        </p>
+                      )}
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-bold">
-                        {attempt.score}/{attempt.max_score}
-                      </p>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-lg font-bold">
+                          {attempt.total_points}/{attempt.max_points}
+                        </p>
+                        {attempt.passed !== undefined && (
+                          <Badge
+                            variant={attempt.passed ? "default" : "destructive"}
+                            className="text-xs"
+                          >
+                            {attempt.passed ? "Passed" : "Failed"}
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">
-                        {((attempt.score / attempt.max_score) * 100).toFixed(0)}%
+                        {((attempt.total_points / attempt.max_points) * 100).toFixed(0)}%
                       </p>
-                      {attempt.completed_at && (
+                      {attempt.submitted_at && (
                         <Badge variant="outline" className="mt-1">
                           Completed
                         </Badge>

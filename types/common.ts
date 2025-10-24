@@ -51,10 +51,14 @@ export interface QuizAttempt {
     id: string
     user_id: string
     quiz_id: string
+    lesson_id?: string
+    duration_ms?: number
+    total_points: number
+    max_points: number
+    passed?: boolean
+    attempt_no: number
     started_at: string
-    completed_at: string | null
-    score: number
-    max_score: number
+    submitted_at?: string
 }
 
 export interface LeaderboardSnapshot {
