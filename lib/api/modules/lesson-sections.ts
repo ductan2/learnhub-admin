@@ -28,76 +28,191 @@ type LessonSectionTypeKey = LessonSection['type']
 const UI_TO_GRAPHQL_SECTION_TYPE: Record<LessonSectionTypeKey, LessonSectionType> = {
   text: LessonSectionType.TEXT,
   video: LessonSectionType.DIALOG,
+  audio: LessonSectionType.AUDIO,
   image: LessonSectionType.IMAGE,
   quiz: LessonSectionType.EXERCISE,
+  exercise: LessonSectionType.EXERCISE,
 }
 
 const GRAPHQL_TO_UI_SECTION_TYPE: Record<LessonSectionType, LessonSectionTypeKey> = {
   [LessonSectionType.TEXT]: 'text',
   [LessonSectionType.DIALOG]: 'video',
-  [LessonSectionType.AUDIO]: 'video',
+  [LessonSectionType.AUDIO]: 'audio',
   [LessonSectionType.IMAGE]: 'image',
-  [LessonSectionType.EXERCISE]: 'quiz',
+  [LessonSectionType.EXERCISE]: 'exercise',
+}
+
+const toTrimmedString = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') {
+    return undefined
+  }
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : undefined
 }
 
 const mapSectionBodyToUi = (section: GraphqlLessonSection): Partial<LessonSection> => {
-  const body = section.body ?? {}
-  const result: Partial<LessonSection> = {}
-
-  if (typeof body.content === 'string' && body.content.trim()) {
-    result.content = body.content
-  } else if (typeof body.text === 'string' && body.text.trim()) {
-    result.content = body.text
-  } else if (typeof body.embed === 'string' && body.embed.trim()) {
-    result.content = body.embed
-  } else if (typeof body.url === 'string' && body.url.trim()) {
-    result.content = body.url
+  const body = (section.body ?? {}) as Record<string, unknown>
+  const result: Partial<LessonSection> = {
+    body,
   }
 
-  if (typeof body.mediaId === 'string' && body.mediaId.trim()) {
-    result.media_id = body.mediaId
-  } else if (typeof body.imageId === 'string' && body.imageId.trim()) {
-    result.media_id = body.imageId
+  const title = toTrimmedString(body.title)
+  if (title) {
+    result.title = title
   }
 
-  if (typeof body.quizId === 'string' && body.quizId.trim()) {
-    result.quiz_id = body.quizId
+  switch (section.type) {
+    case LessonSectionType.TEXT: {
+      const content =
+        toTrimmedString(body.content) ??
+        toTrimmedString(body.text) ??
+        toTrimmedString(body.html)
+      if (content) {
+        result.content = content
+      }
+      break
+    }
+    case LessonSectionType.DIALOG: {
+      const content =
+        toTrimmedString(body.videoUrl) ??
+        toTrimmedString(body.content) ??
+        toTrimmedString(body.embed) ??
+        toTrimmedString(body.url)
+      if (content) {
+        result.content = content
+      }
+      const mediaId = toTrimmedString(body.mediaId)
+      if (mediaId) {
+        result.media_id = mediaId
+      }
+      break
+    }
+    case LessonSectionType.AUDIO: {
+      const content =
+        toTrimmedString(body.audioUrl) ?? toTrimmedString(body.url)
+      if (content) {
+        result.content = content
+      }
+      const mediaId = toTrimmedString(body.mediaId)
+      if (mediaId) {
+        result.media_id = mediaId
+      }
+      break
+    }
+    case LessonSectionType.IMAGE: {
+      const content =
+        toTrimmedString(body.imageUrl) ?? toTrimmedString(body.url)
+      if (content) {
+        result.content = content
+      }
+      const mediaId =
+        toTrimmedString(body.mediaId) ?? toTrimmedString(body.imageId)
+      if (mediaId) {
+        result.media_id = mediaId
+      }
+      if (!result.title) {
+        const caption = toTrimmedString(body.caption)
+        if (caption) {
+          result.title = caption
+        }
+      }
+      break
+    }
+    case LessonSectionType.EXERCISE: {
+      const quizId = toTrimmedString(body.quizId)
+      if (quizId) {
+        result.quiz_id = quizId
+      }
+      break
+    }
   }
 
   return result
 }
 
 const mapSectionBodyToGraphql = (section: LessonSection): CreateLessonSectionInput['body'] => {
-  const body: Record<string, any> = {}
+  const body: Record<string, any> = { ...(section.body ?? {}) }
 
   const trimmedContent = section.content?.trim()
-
-  if (section.type === 'text') {
-    if (trimmedContent) {
-      body.content = trimmedContent
+  const trimmedTitle = section.title?.trim()
+  const setString = (key: string, value?: string | null) => {
+    if (value && value.trim()) {
+      body[key] = value.trim()
+    } else {
+      delete body[key]
     }
   }
 
-  if (section.type === 'video') {
-    if (trimmedContent) {
-      body.content = trimmedContent
+  switch (section.type) {
+    case 'text': {
+      setString('title', trimmedTitle ?? null)
+      setString('content', trimmedContent ?? null)
+      delete body.videoUrl
+      delete body.audioUrl
+      break
     }
-    if (section.media_id) {
-      body.mediaId = section.media_id
+    case 'video': {
+      setString('title', trimmedTitle ?? null)
+      if (trimmedContent) {
+        body.videoUrl = trimmedContent
+        body.content = trimmedContent
+      } else {
+        delete body.videoUrl
+        delete body.content
+      }
+      if (section.media_id) {
+        body.mediaId = section.media_id
+      } else {
+        delete body.mediaId
+      }
+      delete body.audioUrl
+      break
     }
-  }
-
-  if (section.type === 'image') {
-    if (section.media_id) {
-      body.mediaId = section.media_id
+    case 'audio': {
+      setString('title', trimmedTitle ?? null)
+      if (trimmedContent) {
+        body.audioUrl = trimmedContent
+      } else {
+        delete body.audioUrl
+      }
+      if (section.media_id) {
+        body.mediaId = section.media_id
+      } else {
+        delete body.mediaId
+      }
+      delete body.videoUrl
+      delete body.content
+      break
     }
-    if (trimmedContent) {
-      body.url = trimmedContent
+    case 'image': {
+      setString('title', trimmedTitle ?? null)
+      if (trimmedContent) {
+        body.imageUrl = trimmedContent
+        body.url = trimmedContent
+      } else {
+        delete body.imageUrl
+        delete body.url
+      }
+      if (section.media_id) {
+        body.mediaId = section.media_id
+      } else {
+        delete body.mediaId
+      }
+      break
     }
-  }
-
-  if (section.type === 'quiz' && section.quiz_id) {
-    body.quizId = section.quiz_id
+    case 'quiz': {
+      setString('title', trimmedTitle ?? null)
+      if (section.quiz_id) {
+        body.quizId = section.quiz_id
+      } else {
+        delete body.quizId
+      }
+      break
+    }
+    case 'exercise': {
+      setString('title', trimmedTitle ?? null)
+      break
+    }
   }
 
   return body
@@ -253,9 +368,11 @@ export const lessonSections = {
           !original ||
           original.type !== section.type ||
           original.content !== section.content ||
+          original.title !== section.title ||
           original.media_id !== section.media_id ||
           original.quiz_id !== section.quiz_id ||
-          original.order !== section.order
+          original.order !== section.order ||
+          JSON.stringify(original.body ?? null) !== JSON.stringify(section.body ?? null)
 
         if (hasChanged) {
           await lessonSections.update(section)

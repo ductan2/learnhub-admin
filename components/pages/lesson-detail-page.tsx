@@ -6,6 +6,7 @@ import { ArrowLeft, Eye, Loader2, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { LessonSectionsEditor } from "@/components/lessons/lesson-sections-editor"
+import { LessonSectionsPreview } from "@/components/lessons/lesson-sections-preview"
 import type { Lesson, LessonSection } from "@/types/lesson"
 import { api } from "@/lib/api/exports"
 import { useToast } from "@/hooks/use-toast"
@@ -104,7 +105,7 @@ export function LessonDetailPage({ lessonId, initialView = "edit" }: LessonDetai
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => router.push("/lessons")}> 
+          <Button variant="ghost" onClick={() => router.push("/lessons")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to lessons
           </Button>
@@ -160,44 +161,7 @@ export function LessonDetailPage({ lessonId, initialView = "edit" }: LessonDetai
           </TabsContent>
 
           <TabsContent value="preview" className="mt-6">
-            <div className="max-w-4xl space-y-6">
-              <div>
-                <h2 className="text-3xl font-bold mb-2">{lesson.title}</h2>
-                {lesson.description && <p className="text-muted-foreground">{lesson.description}</p>}
-              </div>
-
-              {sections.length === 0 ? (
-                <div className="text-center py-16 text-muted-foreground border border-dashed border-border rounded-lg">
-                  <p>No sections to preview yet</p>
-                </div>
-              ) : (
-                sections.map((section) => (
-                  <div key={section.id} className="border border-border rounded-lg p-6 space-y-4">
-                    {section.type === "text" && section.content && (
-                      <div className="prose prose-sm max-w-none whitespace-pre-wrap">{section.content}</div>
-                    )}
-                    {section.type === "video" && section.content && section.content.trim().startsWith("<") && (
-                      <div className="aspect-video w-full overflow-hidden rounded-lg border border-border" dangerouslySetInnerHTML={{ __html: section.content }} />
-                    )}
-                    {section.type === "video" && section.content && !section.content.trim().startsWith("<") && (
-                      <video controls className="w-full max-h-[480px] rounded-lg">
-                        <source src={section.content} />
-                      </video>
-                    )}
-                    {section.type === "image" && section.content && (
-                      <div className="w-full overflow-hidden rounded-lg">
-                        <img src={section.content} alt={lesson.title} className="w-full h-auto" />
-                      </div>
-                    )}
-                    {section.type === "quiz" && (
-                      <div className="bg-muted rounded p-6 text-center">
-                        <p className="text-muted-foreground">Quiz Component (ID: {section.quiz_id || "Not selected"})</p>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
+            <LessonSectionsPreview lesson={lesson} sections={sections} />
           </TabsContent>
         </Tabs>
       )}

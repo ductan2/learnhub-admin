@@ -12,10 +12,13 @@ import {
   FolderOpen,
   X,
   Loader2,
+  AudioLines,
+  ListChecks,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import type { LessonSection } from "@/types/lesson"
@@ -82,6 +85,22 @@ export function LessonSectionsEditor({
   const updateSection = (id: string, updates: Partial<LessonSection>) => {
     if (isReadOnly) return
     onSectionsChange(sections.map((s) => (s.id === id ? { ...s, ...updates } : s)))
+  }
+
+  const updateSectionBodyField = (id: string, key: string, value: unknown) => {
+    if (isReadOnly) return
+    onSectionsChange(
+      sections.map((section) => {
+        if (section.id !== id) return section
+        const nextBody: Record<string, unknown> = { ...(section.body ?? {}) }
+        if (value === undefined || value === null || (typeof value === "string" && value.trim() === "")) {
+          delete nextBody[key]
+        } else {
+          nextBody[key] = value
+        }
+        return { ...section, body: nextBody }
+      }),
+    )
   }
 
   const deleteSection = (id: string) => {
@@ -198,9 +217,15 @@ export function LessonSectionsEditor({
         return FileText
       case "video":
         return Video
+      case "audio":
+        return AudioLines
       case "image":
         return ImageIcon
       case "quiz":
+        return HelpCircle
+      case "exercise":
+        return ListChecks
+      default:
         return HelpCircle
     }
   }
@@ -211,10 +236,16 @@ export function LessonSectionsEditor({
         return "Text Content"
       case "video":
         return "Video Embed"
+      case "audio":
+        return "Audio"
       case "image":
         return "Image"
       case "quiz":
         return "Quiz"
+      case "exercise":
+        return "Exercise"
+      default:
+        return "Section"
     }
   }
 
@@ -231,6 +262,10 @@ export function LessonSectionsEditor({
           <Button variant="outline" size="sm" onClick={() => addSection("video")} disabled={isReadOnly}>
             <Video className="h-4 w-4 mr-2" />
             Video
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => addSection("audio")} disabled={isReadOnly}>
+            <AudioLines className="h-4 w-4 mr-2" />
+            Audio
           </Button>
           <Button variant="outline" size="sm" onClick={() => addSection("image")} disabled={isReadOnly}>
             <ImageIcon className="h-4 w-4 mr-2" />
@@ -256,6 +291,7 @@ export function LessonSectionsEditor({
           {sections.map((section, index) => {
             const Icon = getSectionIcon(section.type)
             const isEditing = editingSection === section.id
+            const body = (section.body ?? {}) as Record<string, unknown>
 
             return (
               <Card key={section.id} className="p-4">
@@ -303,6 +339,16 @@ export function LessonSectionsEditor({
 
                     {isEditing && (
                       <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Title</Label>
+                          <Input
+                            value={section.title || ""}
+                            onChange={(e) => updateSection(section.id, { title: e.target.value })}
+                            disabled={isReadOnly}
+                            placeholder="Enter section title..."
+                          />
+                        </div>
+
                         {section.type === "text" && (
                           <div className="space-y-2">
                             <Label>Content</Label>
@@ -455,6 +501,95 @@ export function LessonSectionsEditor({
                                 <img src={section.content} alt={getMediaLabel(section)} className="w-full h-auto object-cover" />
                               </div>
                             )}
+
+                            <div className="space-y-2">
+                              <Label>Alt text</Label>
+                              <Input
+                                value={typeof body.altText === "string" ? body.altText : ""}
+                                onChange={(e) => updateSectionBodyField(section.id, "altText", e.target.value)}
+                                disabled={isReadOnly}
+                                placeholder="Describe the image for accessibility..."
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Caption</Label>
+                              <Textarea
+                                value={typeof body.caption === "string" ? body.caption : ""}
+                                onChange={(e) => updateSectionBodyField(section.id, "caption", e.target.value)}
+                                disabled={isReadOnly}
+                                placeholder="Optional caption to display below the image..."
+                                rows={3}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {section.type === "audio" && (
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label>Audio URL</Label>
+                              <Input
+                                value={section.content || ""}
+                                onChange={(e) => updateSection(section.id, { content: e.target.value })}
+                                disabled={isReadOnly}
+                                placeholder="https://example.com/audio.mp3"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Instruction</Label>
+                              <Textarea
+                                value={typeof body.instruction === "string" ? body.instruction : ""}
+                                onChange={(e) => updateSectionBodyField(section.id, "instruction", e.target.value)}
+                                disabled={isReadOnly}
+                                rows={3}
+                                placeholder="Provide guidance for learners..."
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Transcript</Label>
+                              <Textarea
+                                value={typeof body.transcript === "string" ? body.transcript : ""}
+                                onChange={(e) => updateSectionBodyField(section.id, "transcript", e.target.value)}
+                                disabled={isReadOnly}
+                                rows={4}
+                                placeholder="Optional transcript text..."
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Playback speeds (comma separated)</Label>
+                              <Input
+                                value={Array.isArray(body.speed) ? body.speed.join(", ") : ""}
+                                onChange={(e) => {
+                                  const raw = e.target.value
+                                  const speeds = raw
+                                    .split(",")
+                                    .map((part) => part.trim())
+                                    .filter((part) => part.length > 0)
+                                    .map((part) => {
+                                      const numeric = Number(part)
+                                      return Number.isFinite(numeric) ? Number(part) : part
+                                    })
+                                  updateSectionBodyField(section.id, "speed", speeds.length > 0 ? speeds : undefined)
+                                }}
+                                disabled={isReadOnly}
+                                placeholder="0.75, 1.0, 1.25"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label>Audio preview</Label>
+                              {section.content ? (
+                                <audio controls className="w-full">
+                                  <source src={section.content} />
+                                </audio>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">No audio selected.</p>
+                              )}
+                            </div>
                           </div>
                         )}
 
@@ -476,11 +611,24 @@ export function LessonSectionsEditor({
                             </Select>
                           </div>
                         )}
+
+                        {section.type === "exercise" && (
+                          <div className="space-y-2 text-sm text-muted-foreground">
+                            <p>Exercise sections are read-only in this editor.</p>
+                            {Array.isArray(body.questions) && body.questions.length > 0 && (
+                              <p>{body.questions.length} question(s) configured.</p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
 
                     {!isEditing && (
                       <div className="space-y-2 text-sm text-muted-foreground">
+                        {section.title && (
+                          <p className="font-medium text-foreground">{section.title}</p>
+                        )}
+
                         {section.type === "text" && (
                           <p className="line-clamp-3 whitespace-pre-wrap">{section.content || "No content yet"}</p>
                         )}
@@ -506,8 +654,43 @@ export function LessonSectionsEditor({
                           </div>
                         )}
 
+                        {section.type === "audio" && (
+                          <div className="space-y-2">
+                            {section.content ? (
+                              <audio controls className="w-full">
+                                <source src={section.content} />
+                              </audio>
+                            ) : (
+                              <p>No audio selected</p>
+                            )}
+                            {typeof body.instruction === "string" && body.instruction.trim() && (
+                              <p className="text-xs text-muted-foreground line-clamp-2">{body.instruction as string}</p>
+                            )}
+                          </div>
+                        )}
+
                         {section.type === "quiz" && (
-                          <p>Quiz: {section.quiz_id || "Not selected"}</p>
+                          <p>
+                            Quiz:{" "}
+                            {section.quiz_id ||
+                              (typeof body.quizId === "string" && body.quizId.trim()
+                                ? (body.quizId as string)
+                                : "Not selected")}
+                          </p>
+                        )}
+
+                        {section.type === "exercise" && (
+                          <div className="space-y-1">
+                            {typeof body.instruction === "string" && body.instruction.trim() && (
+                              <p className="line-clamp-2">{body.instruction as string}</p>
+                            )}
+                            {Array.isArray(body.questions) && (
+                              <p className="text-xs">
+                                {(body.questions as unknown[]).length} question
+                                {(body.questions as unknown[]).length === 1 ? "" : "s"}
+                              </p>
+                            )}
+                          </div>
                         )}
                       </div>
                     )}

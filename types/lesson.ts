@@ -18,11 +18,13 @@ export interface Lesson {
 export interface LessonSection {
     id: string
     lesson_id: string
-    type: "text" | "video" | "image" | "quiz"
+    type: "text" | "video" | "audio" | "image" | "quiz" | "exercise"
+    title?: string
     content?: string
     media_id?: string
     quiz_id?: string
     order: number
+    body?: Record<string, any>
 }
 
 export interface LessonFilters {
